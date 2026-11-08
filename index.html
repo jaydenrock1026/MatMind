@@ -1,0 +1,1282 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Mat Mind"><meta name="theme-color" content="#0b0a0b"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Mat Mind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: single-column phone app, sticky top bar + fixed bottom tab bar; a wrestling-mat circle is the recurring motif */
+:root{
+  --bg:#0b0a0b; --panel:#161416; --panel2:#201d20; --line:#2e2a2e;
+  --fg:#f4f1ee; --muted:#a29a9e; --dim:#6f686c;
+  --red:#a8101c; --red-hi:#e23441; --red-soft:rgba(168,16,28,.16);
+  --ok:#46a86f; --warn:#d49b2b;
+  --f-display:"Big Shoulders Display","Oswald","Arial Narrow",Impact,sans-serif;
+  --f-body:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--red-hi);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:800;letter-spacing:.01em;line-height:1.02;text-wrap:balance;margin:0;text-transform:uppercase}
+h1{font-size:clamp(2.3rem,9vw,3.4rem)}
+h2{font-size:1.9rem}
+h3{font-size:1.3rem}
+p{margin:0}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 120px}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red-hi)}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack-lg{display:flex;flex-direction:column;gap:26px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font-family:var(--f-display);font-weight:900;font-size:1.35rem;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px;background:none;border:0;padding:0}
+.brand i{width:18px;height:18px;border-radius:50%;border:3px solid var(--red);box-shadow:inset 0 0 0 3px var(--bg),inset 0 0 0 6px var(--fg)}
+.sync{font-family:var(--f-mono);font-size:.68rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+
+/* bottom nav */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#0e0d0e;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tab{background:none;border:0;padding:9px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--dim);font-size:.66rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab[aria-current="page"]{color:var(--fg)}
+.tab[aria-current="page"] svg{stroke:var(--red-hi)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:11px 16px;font-weight:600;min-height:44px;transition:background .15s,border-color .15s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn:hover{border-color:#4a444a}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{background:#c0141f}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:7px 12px;font-size:.9rem}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 13px;font-size:.88rem;font-weight:500;min-height:36px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.link{background:none;border:0;padding:0;color:var(--red-hi);font-weight:600}
+
+/* surfaces */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile:hover{border-color:#4a444a}
+.tile .k{font-family:var(--f-display);font-weight:800;font-size:1.15rem;text-transform:uppercase;line-height:1.05}
+.stat{font-family:var(--f-display);font-weight:900;font-size:2.2rem;line-height:1}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted)}
+.pill.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.pill.red{color:var(--red-hi);border-color:color-mix(in srgb,var(--red-hi) 45%,var(--line))}
+.divider{height:1px;background:var(--line)}
+.bar{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--red-hi);border-radius:99px}
+.note{border-left:3px solid var(--red);padding:2px 0 2px 12px;color:var(--muted);font-size:.9rem}
+
+/* forms */
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:.92rem}
+input[type=text],textarea,select{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+textarea{min-height:88px;resize:vertical;line-height:1.45}
+input[type=range]{width:100%;accent-color:var(--red-hi)}
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.scale button{border:1px solid var(--line);background:var(--panel2);border-radius:7px;min-height:40px;font-family:var(--f-mono);font-size:.9rem;padding:0}
+.scale button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+
+/* hero with mat */
+.hero{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--line);background:#120e10;padding:26px 18px 22px;isolation:isolate}
+.hero .mat{position:absolute;right:-90px;top:50%;width:300px;height:300px;transform:translateY(-50%);border-radius:50%;z-index:-1;opacity:.9;
+  background:radial-gradient(circle,transparent 0 10%,var(--red) 10% 12.5%,transparent 12.5% 40%,var(--red) 40% 47%,transparent 47% 70%,rgba(255,255,255,.08) 70% 71%,transparent 71%)}
+.hero .mat::after{content:"";position:absolute;left:44%;top:46%;width:12%;height:2.4%;background:var(--fg);opacity:.7;box-shadow:0 14px 0 var(--fg)}
+.hero h1 em{font-style:normal;color:var(--red-hi)}
+
+/* lesson typography */
+.prose{display:flex;flex-direction:column;gap:12px;max-width:65ch}
+.prose p{color:#ddd7d3}
+.quiz-opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:11px 13px}
+.quiz-opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--panel2))}
+.quiz-opt.wrong{border-color:var(--red-hi);background:color-mix(in srgb,var(--red-hi) 12%,var(--panel2))}
+
+/* visualization player */
+.player{position:fixed;inset:0;z-index:60;background:#000;color:var(--fg);display:flex;flex-direction:column;justify-content:space-between;padding-block:calc(env(safe-area-inset-top,0px) + 18px) calc(env(safe-area-inset-bottom,0px) + 22px);padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.player .ring{width:min(64vw,260px);aspect-ratio:1;max-width:100%;margin:0 auto;border-radius:50%;position:relative;
+  background:radial-gradient(circle,transparent 0 9%,rgba(168,16,28,.55) 9% 11.5%,transparent 11.5% 39%,rgba(168,16,28,.55) 39% 46%,transparent 46%)}
+.player .ring.live{animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.94);opacity:.65}50%{transform:scale(1);opacity:1}}
+.player .line{font-family:var(--f-display);font-weight:600;font-size:clamp(1.3rem,5.5vw,1.9rem);text-transform:none;letter-spacing:.01em;line-height:1.2;text-align:center;min-height:5.2em;color:#e9e3df;max-width:30ch;margin:0 auto;text-wrap:balance;transition:opacity .6s}
+.player.dim .line,.player.dim .pcontrols,.player.dim .ptop{opacity:.06}
+.player.dim .ring{opacity:.18}
+.pcontrols{display:flex;flex-direction:column;gap:14px;transition:opacity .6s}
+.pbtn{width:64px;height:64px;border-radius:50%;border:1px solid #3a3438;background:#141114;display:grid;place-items:center}
+.pbtn.big{width:78px;height:78px;background:var(--red);border-color:var(--red)}
+.pbtn svg{width:26px;height:26px;fill:#fff}
+.ptop{display:flex;justify-content:space-between;align-items:center;transition:opacity .6s}
+
+/* breathing */
+.box-wrap{position:relative;width:min(78vw,320px);aspect-ratio:1;max-width:100%;margin:0 auto}
+.box-wrap svg{width:100%;height:100%;overflow:visible}
+.box-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none}
+.box-count{font-family:var(--f-display);font-weight:900;font-size:5.2rem;line-height:.9}
+.box-phase{font-family:var(--f-display);font-weight:800;font-size:1.6rem;text-transform:uppercase;letter-spacing:.06em}
+
+/* chat */
+.msgs{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:11px 14px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word;min-width:0}
+.msg.me{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.composer{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px;display:flex;gap:8px;align-items:flex-end}
+.composer textarea{min-height:46px;max-height:140px}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--panel);border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-block:18px calc(env(safe-area-inset-bottom,0px) + 18px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-height:85vh;overflow:auto}
+.sheet .in{max-width:720px;margin:0 auto}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:10px;z-index:70;font-size:.92rem;max-width:calc(100% - 32px)}
+
+.chart{width:100%;height:auto;display:block}
+.codeview{white-space:pre-wrap;font-family:var(--f-body);line-height:1.6;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.check input{width:22px;height:22px;accent-color:var(--red-hi);flex:none;margin-top:1px}
+.day{aspect-ratio:1;border:1px solid var(--line);background:var(--panel);border-radius:9px;font-family:var(--f-mono);font-size:.85rem;display:grid;place-items:center;padding:0}
+.day.done{background:var(--red);border-color:var(--red);color:#fff}
+.day.today{border-color:var(--fg)}
+.days{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head><body><div id="app"></div><script>
+const DIMS={confidence:"Confidence",discipline:"Discipline",focus:"Focus",emotion:"Emotional control",pressure:"Pressure management",resilience:"Resilience"};
+
+const MODULES=[
+{id:1,title:"Developing Your Wrestling Identity",skill:"confidence",summary:"Decide who you are on the mat before the match decides it for you.",
+lessons:[{h:"Identity drives behavior",ps:["Most wrestlers think in outcomes: win the tournament, place at sectionals, beat the kid who pinned them last year. Outcomes matter, but they are not in your control on any given whistle. Identity is. Identity is the answer to one question: what kind of wrestler am I, regardless of the score?","When your identity is clear, decisions in the match get easier. A wrestler who sees himself as 'the guy who never stops wrestling' does not stall with 20 seconds left in a tied match. He doesn't need to think it through. The identity already made the choice.","Your identity should describe behaviors you can show every match: pace, hand-fighting, finishing shots, getting off bottom, wrestling the full six minutes. 'I am a state champ' is a goal. 'I am relentless on my feet and I finish what I start' is an identity."]},
+{h:"Build it from evidence",ps:["Identity is not a slogan you repeat. It is a story backed by proof. Every practice where you finish the last live go as hard as the first is evidence. Every time you get up after being taken down and hand-fight right away is evidence.","Write down three behaviors you want to be known for, then track whether you showed them. Over weeks, the evidence pile becomes the identity. That is why confidence built this way holds up under pressure: it is based on what you have done, not what you hope."]}],
+example:"A 132-pounder keeps losing close matches in the third period. He rewrites his identity from 'I want to win more' to 'I win the third period.' He starts finishing every practice with a 2-minute sprint go and counts how often he scores in the last minute. By February he is the one forcing pace late while opponents fade.",
+exercise:{name:"Three-word identity",steps:["List ten words that describe the wrestler you want to be.","Cross out any word that describes a result (champion, winner, ranked).","Circle the three that describe behaviors you can show every match.","Write one sentence using all three: 'I am a ___, ___, ___ wrestler.'","Read it before every practice for one week."]},
+assignment:"Write your three-word identity and give one piece of evidence from your last practice for each word.",
+quiz:[{q:"Which statement is an identity rather than a goal?",o:["I will place at states","I wrestle hard for all six minutes","I want to beat my rival","I want to be ranked"],a:1,w:"An identity describes a behavior you control every match. Placing, beating someone and rankings are outcomes."},
+{q:"Why does an identity help late in close matches?",o:["It makes you stronger","It removes the need to decide how to compete","It guarantees a win","It distracts you from the score"],a:1,w:"When you already know who you are, you don't debate whether to keep attacking. The decision is made."},
+{q:"What makes an identity believable to yourself?",o:["Repeating it loudly","Posting it online","Evidence from practices and matches","Hearing it from a coach"],a:2,w:"Proof you collected yourself is what makes the identity hold under pressure."}],
+reflect:"Think of a match you lost. Which behavior from your identity was missing in that match?"},
+
+{id:2,title:"Mental Toughness",skill:"resilience",summary:"Keep wrestling your best when it is uncomfortable, unfair or exhausting.",
+lessons:[{h:"Toughness is a skill, not a trait",ps:["Mental toughness is the ability to keep executing when conditions get bad: you're tired, behind, sore, or the call went against you. Some wrestlers seem born tough, but toughness is mostly trained the same way a single leg is trained: reps under realistic pressure.","Tough wrestlers are not the ones who feel no discomfort. They feel it and act anyway. The skill is shrinking the gap between feeling discomfort and doing the right thing."]},
+{h:"Train discomfort on purpose",ps:["Seek controlled hard moments in practice: the extra go, the bad position drill, wrestling from bottom when you hate bottom. Each time, notice the voice that says 'ease off' and practice answering it with a short cue like 'next position.'","Toughness also means recovering fast. The tough wrestler gives up a takedown and is hand-fighting two seconds later, not replaying the mistake."]}],
+example:"In the last live go, a 160-pounder is exhausted and stuck on bottom. Instead of laying flat, he repeats 'hips, hands, up' and builds a base three times before getting the stand-up. He doesn't escape every time, but he never quits on the position.",
+exercise:{name:"The extra rep",steps:["Pick one moment per practice when you are tired.","Do one more quality rep than you planned.","Say your cue word out loud as you start it.","After practice, write down the moment and what the voice in your head said.","Repeat daily for two weeks."]},
+assignment:"Describe the moment in practice when you most want to ease off. Write the exact cue word you will use there.",
+quiz:[{q:"Mentally tough wrestlers…",o:["Feel no fatigue","Feel discomfort and still execute","Never make mistakes","Always win close matches"],a:1,w:"Toughness is acting well despite discomfort, not the absence of it."},
+{q:"A good way to build toughness is…",o:["Avoiding hard drills","Waiting for big matches","Practicing controlled discomfort with a cue","Only lifting weights"],a:2,w:"Planned, repeated hard reps with a response cue train the skill."},
+{q:"After giving up a takedown, a tough wrestler…",o:["Argues the call","Replays it mentally","Resets and hand-fights right away","Slows down to recover"],a:2,w:"Fast recovery is a core part of toughness."}],
+reflect:"When was the last time you felt like quitting a position? What would you tell yourself next time?"},
+
+{id:3,title:"Discipline and Consistency",skill:"discipline",summary:"Show up the same way on bad days as on good ones.",
+lessons:[{h:"Discipline beats motivation",ps:["Motivation is a feeling. It shows up after a big win and disappears in the middle of January when practice is dark and cold. Discipline is doing what you decided regardless of the feeling.","Wrestling rewards the athlete who stacks small, boring wins: drilling with intent, sleeping enough, eating to fuel, getting to practice early, doing the cooldown. None of these are exciting. Together they separate good from great."]},
+{h:"Make standards, not wishes",ps:["A standard is a minimum you meet every day, like 'I drill every rep at match speed' or 'phone off at 10:30.' Standards remove daily debates. You don't decide whether to do it. You already decided.","Keep standards few and specific. Three standards you hit every day beat ten you hit sometimes. When you miss one, don't punish yourself. Just meet it the next day. Consistency is measured over weeks, not days."]}],
+example:"A sophomore sets three standards: arrive 10 minutes early, finish every drill rep, and journal for 3 minutes after practice. On days he feels flat, he still hits those three. By the end of the season his coaches trust him in the varsity spot because he is the same every day.",
+exercise:{name:"Three standards",steps:["Write three daily standards for the next 14 days.","Make each one specific and checkable (yes or no).","Track them each night.","If you miss one, write what got in the way and how you'll handle it tomorrow."]},
+assignment:"Write your three standards and the time of day you will check them.",
+quiz:[{q:"The main difference between discipline and motivation is…",o:["Discipline depends on feelings","Motivation is a feeling; discipline is a decision you keep","They are the same","Motivation lasts longer"],a:1,w:"Discipline holds when the feeling fades."},
+{q:"A good standard is…",o:["Train harder","Be better","Finish every drill rep at match speed","Win more"],a:2,w:"Specific and checkable."},
+{q:"If you miss a standard one day…",o:["Start over next month","Punish yourself","Meet it the next day and learn what got in the way","Drop the standard"],a:2,w:"Consistency is measured over time; one miss isn't failure."}],
+reflect:"Which part of your routine slips first when you're tired or stressed?"},
+
+{id:4,title:"Confidence and Self-Belief",skill:"confidence",summary:"Build confidence you can rely on, not confidence that depends on the bracket.",
+lessons:[{h:"Where real confidence comes from",ps:["Confidence is your belief that you can perform the skills you need. It comes from three main sources: preparation (you've done the work), past performance (you've done it before), and how you talk to yourself.","Confidence based on results is fragile. Lose once and it's gone. Confidence based on preparation lasts. You can't control whether you win today, but you can know that you drilled your setups 500 times this month."]},
+{h:"Talk to yourself like a coach",ps:["Listen to your inner voice before matches. If it sounds like 'don't get taken down' or 'he's ranked, I'm not,' you're coaching yourself toward fear. Swap in instructions: 'win the hand fight,' 'get to my shot,' 'circle and attack.'","Confidence is also shown with the body. Walk to the line with your chest up and eyes forward. Your body language changes how you feel and how your opponent reads you."]}],
+example:"Before facing the top seed, a wrestler's mind says 'he'll tech me.' She stops and lists her proof: 'I've hit my high crotch on every partner this week. I've wrestled six full matches without gassing.' Then she sets one task: 'Win the first tie-up.' She loses 5-3, but competes the whole time and scores on him.",
+exercise:{name:"Confidence bank",steps:["Write ten specific things you've done in training that prove you are prepared.","Keep the list on your phone.","Read it the night before and the morning of every competition.","Add one new entry after every practice."]},
+assignment:"Write five entries for your confidence bank right now.",
+quiz:[{q:"The most reliable source of confidence is…",o:["Your record","Your seed","Your preparation","Your opponent's record"],a:2,w:"Preparation is fully in your control and doesn't vanish after a loss."},
+{q:"'Don't get taken down' is a weak self-cue because…",o:["It's too long","It focuses on what you fear","It's too aggressive","It's too specific"],a:1,w:"Instructions should point at what to do, not what to avoid."},
+{q:"Body language before a match…",o:["Doesn't matter","Affects how you feel and how you're read","Only matters for refs","Should look nervous"],a:1,w:"Posture influences both your own state and your opponent's read."}],
+reflect:"What does your inner voice usually say right before a big match? Rewrite it as an instruction."},
+
+{id:5,title:"Focus and Concentration",skill:"focus",summary:"Keep your attention on the next action, not the crowd, score or bracket.",
+lessons:[{h:"Attention is your most limited resource",ps:["In a match you have about six minutes of attention to spend. Wrestlers waste it on the crowd, the coach in the stands, the score, the ref, and the next round. Every second spent there is a second not spent reading your opponent's hips.","Focus is not staring hard. It is choosing where attention goes and bringing it back quickly when it drifts. Drifting is normal. Returning fast is the skill."]},
+{h:"Narrow, then widen",ps:["Before the match your focus can be wide: game plan, scouting, warm-up. Once the whistle blows, narrow it to the present position: hands, head, hips, feet. Between periods widen briefly to hear your coach, then narrow again.","Use a reset trigger, like touching the center circle or adjusting your headgear, to bring attention back after a stoppage."]}],
+example:"A wrestler hears his name and his dad yelling from the stands right after a stalemate. He taps his ankle band at the edge of the circle, says 'hands first,' and steps back in focused on the tie-up instead of the noise.",
+exercise:{name:"Two-minute present focus",steps:["Sit and set a timer for 2 minutes.","Focus only on your breath at your nostrils.","Each time your mind wanders, say 'back' silently and return.","Count how many times you returned. More returns means more reps, not failure.","Do this daily for a week."]},
+assignment:"Pick your reset trigger (a physical action) and write the cue word that goes with it.",
+quiz:[{q:"During live wrestling, attention should be on…",o:["The score","The crowd","The present position","The next round"],a:2,w:"Narrow focus on hands, head, hips and feet wins positions."},
+{q:"When your focus drifts, the key skill is…",o:["Never drifting","Returning quickly","Getting angry at yourself","Ignoring it"],a:1,w:"Drifting is normal; fast return is the skill."},
+{q:"A reset trigger is…",o:["A rule violation","A physical action that brings attention back","A coach's signal","A type of takedown"],a:1,w:"A repeatable action paired with a cue word."}],
+reflect:"What pulls your attention most in matches: the crowd, the score, the ref, or your own thoughts?"},
+
+{id:6,title:"Aggression and Competitive Mentality",skill:"confidence",summary:"Wrestle to score, not to survive. Controlled aggression wins.",
+lessons:[{h:"Controlled aggression",ps:["Aggression in wrestling means taking initiative: pressuring, attacking, forcing your opponent to react. It is not anger. Angry wrestlers make wild shots and give up position. Controlled aggression is intense effort aimed at a plan.","The competitive mentality is 'I'm here to score.' Wrestlers who wrestle not to lose stop attacking when they get a lead and often give it back."]},
+{h:"Set the pace",ps:["Whoever sets the pace usually sets the outcome. Pressure means constant hand-fighting, moving forward, and attacking in short chains so your opponent can't settle.","If you're naturally passive, set a rule: attack within 10 seconds of every restart on your feet. Make aggression a habit, not a mood."]}],
+example:"Up 4-2 in the third period, a wrestler feels the urge to back up and protect the lead. He remembers his rule: 'Score again.' He keeps hand-fighting, hits a low single with 40 seconds left, and wins 7-3 instead of holding on.",
+exercise:{name:"Ten-second rule",steps:["In live goes this week, attack within 10 seconds of every restart on your feet.","Have a partner or coach count if possible.","Track how many restarts you met the rule.","Notice how your opponent reacts when you pressure first."]},
+assignment:"Write your rule for what you'll do when you get a lead.",
+quiz:[{q:"Controlled aggression is…",o:["Wrestling angry","Intense effort aimed at a plan","Shooting from far away","Talking trash"],a:1,w:"Aggression without control gives up positions."},
+{q:"Wrestling 'not to lose' usually leads to…",o:["Bigger leads","Stalling and giving leads back","Better conditioning","More pins"],a:1,w:"Protecting a lead often invites pressure and stall calls."},
+{q:"Setting the pace means…",o:["Waiting for mistakes","Constant pressure and attacking in chains","Wrestling slowly","Only defending"],a:1,w:"Pressure forces your opponent to react to you."}],
+reflect:"When you get a lead, what do you usually do? What do you want to do?"},
+
+{id:7,title:"Handling Fear, Anxiety, and Pressure",skill:"pressure",summary:"Nerves are normal. Learn to use them instead of fighting them.",
+lessons:[{h:"Nerves are energy",ps:["The racing heart, tight stomach and shaky hands before a match are your body getting ready to compete. The same signals happen when you're excited. What changes is the story you tell about them.","Instead of 'I'm nervous, something's wrong,' try 'I'm ready, my body is getting fired up.' Research on reframing arousal suggests that calling it excitement can help performance more than trying to calm down completely."]},
+{h:"Shrink the moment",ps:["Pressure grows when you think about everything the match means: rankings, parents, college, your rival. Shrink it back to the size of the mat. The match is a series of positions. Your only job is the next one.","Use your breathing to bring arousal to the right level. A few slow breaths with longer exhales can settle you if you're too amped. Short sharp breaths and movement can bring you up if you're flat."]}],
+example:"Before her first state match, a wrestler feels sick. She tells herself, 'This is my body getting ready.' She does six slow breaths with long exhales, jogs in place, and sets one task: 'Win the first hand fight.' The nerves don't disappear, but they stop running the show.",
+exercise:{name:"Reframe and task",steps:["Write the physical signs you feel before matches.","Next to each, write the reframe ('heart racing = ready').","Choose one breathing pattern for when you're too amped.","Choose one first-task cue for the opening seconds.","Practice the full sequence before every live go this week."]},
+assignment:"Write your biggest competition fear and one sentence that shrinks it back to the next position.",
+quiz:[{q:"Pre-match nerves are best understood as…",o:["A sign you'll lose","Your body preparing to compete","Something to eliminate","Weakness"],a:1,w:"The same arousal can be read as readiness."},
+{q:"To shrink a big moment, focus on…",o:["What the win means","The next position","Who is watching","Your seed"],a:1,w:"Positions are controllable; meaning is not."},
+{q:"If you're too amped before a match, try…",o:["Slow breaths with longer exhales","Holding your breath","Thinking about rankings","Skipping warm-up"],a:0,w:"Longer exhales tend to bring arousal down."}],
+reflect:"What thought makes you most nervous before matches? Where does it come from?"},
+
+{id:8,title:"Losing, Failure, and Adversity",skill:"resilience",summary:"Every wrestler loses. What you do in the next 24 hours matters most.",
+lessons:[{h:"Losing is information",ps:["Even the best wrestlers in the world lose matches. Losing hurts because you care, and that's a good sign. But a loss is data about what to fix, not a verdict on who you are.","Separate the person from the performance. 'I lost that match' is true. 'I'm a loser' is a story you add. The first leads to learning. The second leads to quitting."]},
+{h:"The 24-hour rule",ps:["Give yourself time to feel the loss. Then, within 24 hours, do a short review: what went well, what broke down, and one thing to train this week. Then let it go.","Adversity inside a match works the same way: you got taken down, the call went against you, you're down 6-0. Accept it fast ('that happened'), then ask 'what's next?' Wrestlers who come back from big deficits stopped arguing with what already happened."]}],
+example:"After losing in the blood round, a wrestler sits with it that night. The next day he writes: 'Good: hand-fighting in the first period. Broke down: got ridden out in the second. Train: stand-ups from bottom this week.' He wins his next tournament on a third-period escape.",
+exercise:{name:"Post-loss review",steps:["Wait until you've calmed down (but within 24 hours).","Write two things that went well.","Write one thing that broke down.","Write one specific drill or habit to train this week.","Close the notebook and move on."]},
+assignment:"Do a post-loss review for your most recent loss (or toughest practice).",
+quiz:[{q:"'I lost that match' versus 'I'm a loser' shows…",o:["They mean the same","Separating performance from identity","Both are healthy","Neither matters"],a:1,w:"Performance can change; a label keeps you stuck."},
+{q:"The 24-hour rule means…",o:["Never think about losses","Feel it, review it briefly, then move on","Train for 24 hours","Don't wrestle for a day"],a:1,w:"Process the loss, extract the lesson, let it go."},
+{q:"When you fall behind in a match, the first step is…",o:["Argue the call","Accept it and ask what's next","Wrestle safer","Look at your coach"],a:1,w:"Acceptance frees attention for the next action."}],
+reflect:"How do you usually talk to yourself after a loss? Is it helping you get better?"},
+
+{id:9,title:"Visualization and Mental Rehearsal",skill:"focus",summary:"Practice the match in your head so your body has been there before.",
+lessons:[{h:"Why mental rehearsal works",ps:["When you vividly imagine performing a skill, your brain activates many of the same areas used to actually perform it. Imagery doesn't replace practice, but adding it to practice can help with skill, confidence and handling pressure.","The key word is vivid. Good visualization uses all your senses: the smell of the gym, the tape on your fingers, the sound of shoes on the mat, the grip of a collar tie, the feeling of your heart rate rising."]},
+{h:"How to visualize well",ps:["See it from your own eyes (first person) for match feel, and from the stands (third person) to check technique. Rehearse at real speed. Include adversity: give up a takedown in your imagination and practice responding calmly.","Keep sessions short: 3 to 10 minutes. Do them consistently, especially the night before and the morning of a match. The Visualization Room in this app is built for exactly this."]}],
+example:"A wrestler visualizes his finals match every night for a week, including being taken down first and calmly escaping. When it actually happens in the finals, he feels like he's been there, because mentally he has.",
+exercise:{name:"Five-sense rehearsal",steps:["Close your eyes and breathe slowly for 30 seconds.","Picture the arena: what do you see, hear, smell?","Feel your feet on the mat and your hands in the first tie-up.","Run through scoring your best takedown at full speed.","Rehearse one bad moment and your calm response.","Open your eyes and write one detail you noticed."]},
+assignment:"Complete one session in the Visualization Room and write the most vivid detail you experienced.",
+quiz:[{q:"Visualization works best when it is…",o:["Vague and relaxed","Vivid and multi-sensory","Only visual","Done once a month"],a:1,w:"Using all senses makes imagery more effective."},
+{q:"Why rehearse adversity in your head?",o:["To make you nervous","So your response feels familiar when it happens","It's bad luck","It isn't useful"],a:1,w:"Practicing the response prepares you for real setbacks."},
+{q:"A good visualization session length is…",o:["30 seconds","3–10 minutes","An hour","Only before states"],a:1,w:"Short and consistent works."}],
+reflect:"When you imagine your next big match, what do you see first? Is it helpful?"},
+
+{id:10,title:"Emotional Control",skill:"emotion",summary:"Feel everything. Let nothing take the steering wheel.",
+lessons:[{h:"Emotions are signals, not orders",ps:["Anger, frustration and fear will show up in matches. That's normal. The problem is when emotion starts making decisions: a frustrated wrestler throws a reckless headlock, an angry wrestler argues with the ref and loses focus for the next restart.","The goal is not to feel nothing. It is to notice the emotion, name it, and choose your next action anyway."]},
+{h:"Name it, breathe, act",ps:["Naming an emotion ('that's frustration') can reduce its intensity. Follow it with one controlled breath and a specific action cue. This takes about three seconds and fits in any stoppage.","Watch for your personal triggers: a bad call, a stalling warning, being ridden, a trash-talking opponent. Plan your response to each in advance so you're not inventing it in the heat of the moment."]}],
+example:"After a stalling call against him, a wrestler feels his face get hot. He walks to the edge, says 'frustrated,' takes one long exhale, and says 'hands and pressure.' He scores the next takedown instead of picking up a second warning.",
+exercise:{name:"Trigger plan",steps:["List your three biggest emotional triggers in matches.","For each, write the emotion it causes.","Write a 3-second response: name it, breathe, cue word.","Practice by having a partner simulate a trigger in practice (a fake bad call)."]},
+assignment:"Write your trigger plan for the trigger that costs you the most.",
+quiz:[{q:"The goal of emotional control is…",o:["Feeling nothing","Letting emotions guide you","Noticing emotions and choosing your action","Hiding emotions"],a:2,w:"Emotions are signals; you still choose the action."},
+{q:"Naming an emotion can…",o:["Make it worse","Reduce its intensity","Get you penalized","Slow you down"],a:1,w:"Labeling helps create space between feeling and action."},
+{q:"A trigger plan is useful because…",o:["You avoid all triggers","You don't invent responses mid-match","Refs will be nicer","It replaces practice"],a:1,w:"Pre-planned responses are faster and calmer."}],
+reflect:"Describe the last time an emotion cost you a position or a match."},
+
+{id:11,title:"Match Intelligence and Mental Strategy",skill:"focus",summary:"Wrestle with a plan and adjust it in real time.",
+lessons:[{h:"Have a plan before the whistle",ps:["Smart wrestlers walk out with a simple plan: two or three keys like 'get to my outside single,' 'stay heavy on top,' 'stand up immediately on bottom.' Plans should come from your strengths and anything you know about your opponent.","Keep it simple. Under pressure, nobody remembers ten instructions. Three keys you actually execute beat a perfect plan you forget."]},
+{h:"Read and adjust",ps:["Matches change. If your opponent shuts down your favorite shot, you need a second option. Between periods, ask: what's working, what isn't, what's one change? Your coach helps, but you need to read the match too.","Know the clock and the score. Choosing top, bottom or neutral in the second period, knowing when riding time matters, and managing the edge of the mat are all part of match intelligence."]}],
+example:"In the first period, every time a wrestler shoots his double, the opponent sprawls hard. At the break he notes it and switches to snapping down off the sprawl reaction. He scores a front headlock go-behind in the second.",
+exercise:{name:"Three keys",steps:["Before your next match or live go, write three keys.","One for neutral, one for top, one for bottom.","After the match, grade each key: did you execute it?","Write one adjustment you would make."]},
+assignment:"Write your three keys for your next match.",
+quiz:[{q:"A good match plan has…",o:["Ten detailed instructions","Two or three simple keys","No structure","Only defense"],a:1,w:"Simple keys survive pressure."},
+{q:"If your best shot isn't working…",o:["Keep forcing it","Have a second option ready","Stop attacking","Wait for the third period"],a:1,w:"Adjusting is part of match intelligence."},
+{q:"Between periods you should ask…",o:["Who's watching","What's working, what isn't, one change","What the bracket looks like","Nothing"],a:1,w:"A quick self-review sharpens the next period."}],
+reflect:"How often do you wrestle with a clear plan? What happens when you don't?"},
+
+{id:12,title:"Fatigue and Recovery Mindset",skill:"resilience",summary:"Fatigue makes cowards of us all, unless you've trained your mind for it.",
+lessons:[{h:"Tired is a feeling, not a stop sign",ps:["In the third period, your body sends strong 'stop' signals well before you're truly empty. Many wrestlers slow down at the first wave of fatigue. The ones who win late have learned that the first wave is a warning, not a limit.","Train this in practice: when the wave hits, focus on small tasks like 'hands, feet, breathe.' Narrow focus makes fatigue more manageable."]},
+{h:"Recovery is part of training",ps:["Mental recovery matters as much as physical recovery. After hard days, wind down: breathe, eat, hydrate, sleep. A tired mind makes poor decisions and loses motivation faster.","Between matches at tournaments, recover deliberately: get off your feet, refuel and rehydrate sensibly, do a short breathing session, then rebuild energy before your next match."]}],
+example:"At a two-day tournament, a wrestler sits in the bleachers watching everyone's matches for hours. His teammate rests with headphones, does box breathing, eats and stretches. The teammate wrestles fresher in the semis.",
+exercise:{name:"Third-period cue",steps:["Choose one short cue for when fatigue hits (e.g. 'hands, feet, breathe').","In the last live go of each practice, use it the moment you feel tired.","After practice, rate how well you kept pace (1–10).","Track for two weeks."]},
+assignment:"Write your tournament recovery routine for between matches.",
+quiz:[{q:"The first wave of fatigue is usually…",o:["Your true limit","A warning, not a limit","A sign to stop","An injury"],a:1,w:"Most athletes have more left after the first wave."},
+{q:"When tired, a helpful focus is…",o:["The whole match","Small tasks like hands and feet","The score","How tired you are"],a:1,w:"Narrow tasks make fatigue manageable."},
+{q:"Between tournament matches, you should…",o:["Watch every match standing up","Recover deliberately","Skip food","Stay amped all day"],a:1,w:"Deliberate recovery keeps you fresh."}],
+reflect:"How do you behave when you're exhausted in a match? What do you want to change?"},
+
+{id:13,title:"Pre-Match Mental Preparation",skill:"pressure",summary:"Build a routine that gets you to the line ready every time.",
+lessons:[{h:"Why routines work",ps:["A pre-match routine makes every match feel familiar, whether it's a dual meet or a state final. It tells your body and mind 'this is what we do before we compete.' It also gives your nervous energy a job.","A routine has three parts: physical warm-up, mental prep, and a final trigger to switch on."]},
+{h:"Build yours",ps:["Physical: get a sweat, move through your stance, motion and shots. Mental: a short visualization, breathing to set your energy, and reviewing your three keys. Trigger: a final action before stepping on the mat, like slapping your legs, a deep breath, or a cue phrase.","Time your routine. If you have 20 minutes, do the full version. If the bracket moves fast and you have 5 minutes, have a short version ready."]}],
+example:"A wrestler's routine: 10 minutes warm-up, 3 minutes visualization, 1 minute box breathing, read his three keys, then slap his thighs twice and say 'go to work' before walking to the line. He uses the same routine every match all season.",
+exercise:{name:"Write your routine",steps:["Write a full 20-minute routine (physical, mental, trigger).","Write a 5-minute short version.","Practice the routine before a live go this week.","Adjust anything that feels forced."]},
+assignment:"Write your full and short pre-match routines. Add them to My Wrestling Code.",
+quiz:[{q:"The three parts of a routine are…",o:["Eat, sleep, wrestle","Physical, mental, trigger","Stretch, talk, shoot","Weigh-in, warm-up, cool-down"],a:1,w:"Each part prepares a different system."},
+{q:"Why have a short version?",o:["Brackets can move fast","It's more fun","Long routines are bad","Coaches prefer it"],a:0,w:"You need a version that fits any timing."},
+{q:"A trigger is…",o:["A final action that switches you on","A takedown","A penalty","A type of warm-up"],a:0,w:"It marks the moment you're ready."}],
+reflect:"What do you usually do in the 10 minutes before a match? Does it help?"},
+
+{id:14,title:"In-Match Mental Control",skill:"emotion",summary:"Stay in the match, one position at a time.",
+lessons:[{h:"One position at a time",ps:["A match is a chain of positions: neutral, a tie-up, a shot, a scramble, top, bottom. Each position is its own mini-battle. Wrestlers lose control when they jump ahead ('I need two more takedowns') or look back ('I can't believe he scored').","Stay in the current position. Ask 'what does this position need?' and do it."]},
+{h:"Use stoppages",ps:["Every stoppage is a chance to reset: out of bounds, blood time, between periods. Use a two-step reset: one breath, one cue. Don't use stoppages to argue, look at the crowd, or replay mistakes.","Know your cues for each position: neutral ('hands, head, pressure'), top ('heavy hips, break him down'), bottom ('base, hands, up')."]}],
+example:"Down 3-0, a wrestler starts bottom in the second. Instead of thinking about the deficit, he focuses on 'base, hands, up.' He gets an escape, then a takedown, and wins 4-3.",
+exercise:{name:"Position cues",steps:["Write one cue for neutral, top and bottom.","Say each cue out loud before drilling that position this week.","In live goes, use them during every stoppage.","Note which cue helped most."]},
+assignment:"Write your neutral, top and bottom cues.",
+quiz:[{q:"Losing control often happens when you…",o:["Focus on the current position","Jump ahead or look back","Use a cue","Breathe"],a:1,w:"Future and past steal present attention."},
+{q:"A good use of a stoppage is…",o:["Arguing the call","One breath and one cue","Looking at the crowd","Replaying mistakes"],a:1,w:"Stoppages are reset opportunities."},
+{q:"Position cues should be…",o:["Long and detailed","Short and specific to the position","The same for all positions","Optional"],a:1,w:"Short cues work under pressure."}],
+reflect:"What thought pulls you out of the current position most often?"},
+
+{id:15,title:"Post-Match Analysis",skill:"discipline",summary:"Turn every match into a lesson, win or lose.",
+lessons:[{h:"Review every match",ps:["Most wrestlers only analyze losses. But wins hide mistakes too: a takedown you gave up, a period you coasted. Review every match the same way so you learn from all of them.","Do it soon, but not immediately. Give yourself a few minutes to cool down, then answer three questions: what worked, what broke down, what's my one fix?"]},
+{h:"Use film and data",ps:["If you have video, watch your match once for the overall flow, then again for one specific thing (your hand-fighting, your bottom, your finishes). Notice patterns across several matches.","Track simple stats: takedowns scored and allowed, escapes, how often you're first to score. Patterns tell you what to train. Use this app's journal to log your answers."]}],
+example:"A wrestler wins 8-5 and feels great, but in his review notices he gave up both takedowns from the same underhook. He spends the next week on underhook defense and doesn't give it up again.",
+exercise:{name:"Three-question review",steps:["After every match, wait 10–30 minutes.","Answer: what worked? What broke down? What's my one fix?","Log it in the journal (after winning / after losing templates).","Every two weeks, read back and look for patterns."]},
+assignment:"Do a three-question review for your last match or live go.",
+quiz:[{q:"Why review wins too?",o:["You don't need to","Wins can hide mistakes","To brag","Coaches require it"],a:1,w:"Every match has lessons."},
+{q:"The three review questions are…",o:["Who, what, where","What worked, what broke down, one fix","Score, time, ref","Win, lose, draw"],a:1,w:"Simple and repeatable."},
+{q:"Watching film for one specific thing helps because…",o:["It's faster","Focused review reveals patterns","It's more fun","It replaces practice"],a:1,w:"Specific focus makes patterns visible."}],
+reflect:"What patterns have you noticed across your last few matches?"},
+
+{id:16,title:"Building Your Personal Wrestling Philosophy",skill:"discipline",summary:"Put it all together into a code you live by.",
+lessons:[{h:"Your philosophy",ps:["A wrestling philosophy is your answer to why you wrestle, how you compete and what you stand for. It ties together your identity, your standards, your routines and how you handle adversity.","Great wrestlers can usually describe theirs in a few sentences. It guides them when motivation fades, when they lose, and when they win and need to stay hungry."]},
+{h:"Write it, live it, update it",ps:["Write your philosophy in your own words. Use what you've learned in every module: your identity words, your standards, your pre-match routine, your trigger plans, your response to losing.","Read it regularly and update it as you grow. A freshman's philosophy should look different from a senior's. The My Wrestling Code feature in this app helps you build and save yours."]}],
+example:"A senior's code: 'I wrestle because it makes me better at everything else. I compete for six full minutes, I attack first, and I never argue with what already happened. My standards: early to practice, every rep at match speed, sleep by 10:30. When I lose, I learn. When I win, I review.'",
+exercise:{name:"Draft your code",steps:["Open My Wrestling Code.","Fill in every section in your own words.","Generate your code document.","Read it aloud. Edit anything that doesn't sound like you.","Read it before every competition."]},
+assignment:"Complete My Wrestling Code and write the one line from it that matters most to you.",
+quiz:[{q:"A wrestling philosophy includes…",o:["Only your goals","Why you wrestle, how you compete, what you stand for","Your record","Your weight class"],a:1,w:"It's the full picture of how you compete."},
+{q:"Your philosophy should…",o:["Never change","Grow as you grow","Be copied from someone else","Be kept secret from yourself"],a:1,w:"Update it as you develop."},
+{q:"The best time to read your code is…",o:["Never","Before competitions and when motivation fades","Only after losses","Only in summer"],a:1,w:"It guides you when you need it most."}],
+reflect:"Why do you wrestle? Write the honest answer."}
+];
+
+/* Visualization sessions. cue: whistle | cheer | roar | squeak | applause | hush */
+const VIZ=[
+{id:"arena",letter:"A",title:"Walking Into The Arena",skill:"pressure",env:"hs",lines:[
+["Close your eyes. Take a slow breath in through your nose, and let it out slowly.",5],
+["Imagine yourself standing at the entrance of the arena, your bag over your shoulder.",5],
+["The doors open. You hear it before you see it. Hundreds of voices, a whistle on a far mat, shoes squeaking against vinyl.",6,"squeak"],
+["Notice the smell. Mat cleaner, sweat, popcorn from the concession stand.",5],
+["Feel yourself walking forward. Your feet are steady. Your shoulders are relaxed.",5],
+["Look out at the floor. Eight mats, each with a red center circle. Wrestlers warming up in team colors.",6,"whistle"],
+["You've trained for this. Every early practice, every last live go, every drill rep you finished when you were tired.",6],
+["You are prepared. That preparation walks in with you.",5],
+["Look toward the mat you'll compete on. Picture stepping onto it. Feel the surface give slightly under your shoes.",6],
+["Take another controlled breath. In for four, out slowly.",7],
+["You're not here to worry about the outcome. You're here to compete, trust your preparation, and execute.",6,"cheer"],
+["Imagine looking across the mat at an opponent. Feel the intensity rise. Stay composed.",6],
+["You are focused. You are prepared. You are ready.",6],
+["When you're ready, take one more breath and open your eyes.",4]]},
+{id:"warmup",letter:"B",title:"The Pre-Match Warmup",skill:"focus",env:"hs",lines:[
+["Close your eyes. Breathe in slowly, and let the breath out.",5],
+["You're in the warm-up area. Your match is three bouts away.",5],
+["Feel your body start to move. Light jog. Arms swinging. Your heart rate climbing.",6,"squeak"],
+["Drop into your stance. Feel your weight on the balls of your feet, knees bent, hands up.",6],
+["Motion. Level change. Penetration step. Feel each shot crisp and fast.",6],
+["Sweat starts to break. That's good. Your body is switching on.",5],
+["Now slow it down. Put your headphones in your mind's ear. Run your three keys.",6],
+["Key one for neutral. See yourself doing it.",6],
+["Key one for top. Feel it.",6],
+["Key one for bottom. Hear yourself say the cue.",6],
+["The table calls your bout number. Your energy rises. That's readiness.",5,"whistle"],
+["One last breath. Do your trigger. You're switched on.",5],
+["Open your eyes when you're ready.",3]]},
+{id:"opponent",letter:"C",title:"Standing Across From Your Opponent",skill:"confidence",env:"hs",lines:[
+["Close your eyes. Breathe in, and let it go.",5],
+["You step onto the mat. Your coach slaps your back. You walk to the center circle.",6],
+["Your ankle band is on. You toe the line. Feel the tape under your shoe.",5],
+["Look across at your opponent. Notice his stance, his size, the look on his face.",6],
+["Whatever he's done before doesn't matter right now. Neither does your record.",5],
+["Feel your chest open. Your eyes stay level. Your breathing is controlled.",6],
+["Remind yourself: I've prepared for this. My hands win the first exchange.",5],
+["The ref brings you in for the handshake. Firm grip. Eye contact.",5],
+["You step back to your line. Your weight drops into your stance.",5],
+["You're calm on the outside and switched on inside.",6],
+["The ref raises his hand. You're ready.",5,"whistle"],
+["Open your eyes.",2]]},
+{id:"crowd",letter:"D",title:"Hearing The Crowd",skill:"focus",env:"big",lines:[
+["Close your eyes. Breathe slowly.",5],
+["Listen to the crowd around you. Let it get louder in your mind.",6,"roar"],
+["Hear people yelling, cheering, a horn somewhere in the stands.",6],
+["Notice how it makes your body feel. Maybe your heart rate jumps. That's normal.",6],
+["Now imagine the sound moving behind a wall of glass. You still hear it, but it's far away.",7],
+["What's left is your breathing, your coach's voice, and the person across from you.",6],
+["Somebody yells your name. You let it pass by.",5,"cheer"],
+["Narrow your focus to your opponent's hips and hands. The crowd is background.",7],
+["Your attention is yours. You decide where it goes.",6],
+["One more breath. Hold that narrow focus.",6],
+["Open your eyes when you're ready.",3]]},
+{id:"whistle",letter:"E",title:"The Opening Whistle",skill:"confidence",env:"hs",lines:[
+["Close your eyes. Breathe in through your nose, out through your mouth.",5],
+["You're in your stance, toes at the line. The ref looks at both of you.",5],
+["The whistle blows.",3,"whistle"],
+["You move first. Hands up, fighting for inside position.",5,"squeak"],
+["Feel the first collar tie. Feel his weight. You snap his head and circle.",6],
+["You're the one setting pace. He's reacting to you.",5],
+["You see the opening. Level change. Penetration step. You're in on his legs.",6],
+["You finish. Run the pipe, come up, keep driving. Feel the control.",6,"cheer"],
+["Two. No, three points. The ref's arm goes up.",5],
+["You don't celebrate. You stay heavy. Next position.",6],
+["Breathe. You started this match on your terms.",5],
+["Open your eyes.",3]]},
+{id:"gameplan",letter:"F",title:"Executing Your Game Plan",skill:"focus",env:"hs",lines:[
+["Close your eyes. Settle your breathing.",5],
+["You walk out with three keys. Say them to yourself now.",7],
+["First period. You stick to key one. You hand-fight, set up, and score.",7,"squeak"],
+["Second period. You choose your position. You know why you chose it.",6],
+["On top: hips heavy, chop, break him down. Feel him flatten out.",7],
+["On bottom: base, hands, up. Feel yourself stand and cut free.",7,"cheer"],
+["Something stops working. You notice. You switch to your second option.",6],
+["Between periods, your coach talks. You hear one thing: the adjustment.",6],
+["Third period. The plan still holds. You execute without overthinking.",6],
+["The match ends. Win or lose, you wrestled your plan. That's a performance you can build on.",6,"whistle"],
+["Open your eyes when you're ready.",3]]},
+{id:"behind",letter:"G",title:"Wrestling From Behind",skill:"resilience",env:"hs",lines:[
+["Close your eyes. Breathe in slowly.",5],
+["Picture the scoreboard. You're down 5 to 1 in the second period.",5],
+["Notice the urge to panic or rush. Let it be there.",6],
+["Take one breath. Say: that happened. What's next?",6],
+["You start bottom. Base, hands, up. You fight his hands and stand.",6,"squeak"],
+["Escape. Five to two. The ref's hand goes up for one point.",5,"cheer"],
+["Back on your feet. You don't shoot wildly. You hand-fight and set it up.",6],
+["He's getting tired. You feel it in his hands. You increase the pace.",6],
+["Low single. Finish. Five to five.",5,"roar"],
+["Third period. You don't stop. Pressure, pressure, pressure.",6],
+["Whatever the final score, you never stopped wrestling. That's who you are.",6,"whistle"],
+["Open your eyes.",3]]},
+{id:"adversity",letter:"H",title:"Handling Adversity",skill:"emotion",env:"hs",lines:[
+["Close your eyes. Breathe slowly.",5],
+["You're in a close match. You go for a shot and get called for a slam that you don't agree with.",6,"whistle"],
+["Feel the heat rise in your face. Name it: frustration.",6],
+["Take one long exhale. Longer than the inhale.",7],
+["Walk to the edge. Touch the circle. Say your cue word.",6],
+["You come back to the center calm. The call is over.",5],
+["Now imagine you tweak your shoulder in a scramble. It hurts, but you're cleared to continue.",6],
+["Notice the worry. Then come back to what you control: your hands, your feet, your effort.",7],
+["The crowd groans at a stall call against you. You let it pass.",5,"hush"],
+["One position at a time. Base, hands, pressure.",6],
+["You handled it. Adversity didn't run your match. You did.",6],
+["Open your eyes.",3]]},
+{id:"calm",letter:"I",title:"Staying Calm Under Pressure",skill:"pressure",env:"champ",lines:[
+["Close your eyes. Take a slow breath in for four. Out for six.",8],
+["Tied match. Thirty seconds left in the third period.",5],
+["Notice your heart pounding. That's energy, not danger.",6,"roar"],
+["Your breathing slows. In for four. Out for six.",9],
+["You're not thinking about the bracket. Just this position.",5],
+["Hand fight. Head position. Stay in good stance.",6,"squeak"],
+["You feel him lean. You stay patient. You don't force it.",6],
+["The opening comes. You take it with control, not panic.",6],
+["Whatever happens, you stay composed. Composure is a choice you're making right now.",6,"cheer"],
+["Another breath. Long exhale.",7],
+["Calm under pressure is a skill you're training today.",5],
+["Open your eyes when you're ready.",3]]},
+{id:"win",letter:"J",title:"Winning The Match",skill:"confidence",env:"big",lines:[
+["Close your eyes. Breathe in slowly.",5],
+["Third period. You're up two. You keep attacking.",5,"squeak"],
+["Ten seconds. Five. The buzzer.",5,"whistle"],
+["The crowd reacts. Feel the release of six minutes of work.",6,"roar"],
+["You shake your opponent's hand. You shake his coach's hand.",5],
+["The ref raises your arm. Feel it. Notice exactly how it feels.",7,"applause"],
+["You worked for this moment. Every early morning. Every last go.",6],
+["Walk off the mat with respect. Hug your coach.",5],
+["Now notice: you're already thinking about what you can improve. Winners review wins too.",6],
+["Hold onto this feeling. It's proof of what your preparation can do.",6],
+["Open your eyes.",3]]},
+{id:"lose",letter:"K",title:"Losing And Responding With Confidence",skill:"resilience",env:"hs",lines:[
+["Close your eyes. Breathe slowly.",5],
+["The buzzer sounds. You lost a close one.",5,"whistle"],
+["Feel the disappointment. It's okay. It means you care.",6],
+["You shake hands with your head up. You walk off with control.",6],
+["Your coach puts a hand on your shoulder. You listen.",5],
+["You find a quiet spot. You let yourself feel it for a minute.",7],
+["Then you breathe. In slowly. Out longer.",8],
+["You say: I lost that match. I'm not a loser.",6],
+["You ask: what's one thing I'll fix this week?",6],
+["See yourself back in the practice room on Monday, drilling that exact thing.",6],
+["See yourself in the next tournament, stronger because of this.",6,"cheer"],
+["Open your eyes when you're ready.",3]]},
+{id:"champ",letter:"L",title:"Championship Match Visualization",skill:"pressure",env:"finals",lines:[
+["Close your eyes. Breathe in slowly. Hold for a second. Let it out.",6],
+["It's the championship final. The other mats are rolled up. One mat, under the lights.",6],
+["The announcer calls your name. The crowd stands.",5,"roar"],
+["Walk to the center. Feel the spotlight warm on your shoulders.",6],
+["You've imagined this many times. Today you're ready for it.",5],
+["Handshake. Whistle.",4,"whistle"],
+["First period: you set the pace. Hands, pressure, attack.",6,"squeak"],
+["Second period: he scores. You respond immediately. That happened. What's next.",6],
+["Third period: you're tired. So is he. You've trained for this exact feeling.",6],
+["Hands, feet, breathe. You push the pace one more time.",6,"cheer"],
+["Whatever the scoreboard says, you wrestled six full minutes like a champion.",6],
+["The final buzzer.",4,"applause"],
+["Breathe. Open your eyes when you're ready.",3]]}
+];
+
+const CHAMPIONSHIP_NIGHT={id:"night",letter:"★",title:"Championship Night",skill:"pressure",env:"finals",lines:[
+["Put your headphones on. Close your eyes. Take three slow breaths with me.",6],
+["In. And out.",5],["In. And out.",5],["One more. In, and long out.",7],
+["It's Saturday night. The championship finals. The arena has been cleared down to one mat.",7],
+["You're in the tunnel. You can hear the crowd through the walls, a low roar rising and falling.",7,"roar"],
+["Feel your singlet. Your headgear in your hand. Your shoes laced tight.",6],
+["Your coach is next to you. He says one thing. Hear his voice.",6],
+["The house lights drop. A spotlight hits the center circle.",6,"hush"],
+["The announcer begins the introductions. Your weight class. Your opponent's name.",6],
+["Then yours. Hear it echo through the arena.",5,"roar"],
+["Walk out. Every step is steady. Your eyes are on the mat.",7],
+["Step on. Feel the familiar give under your feet. This is the same mat you've wrestled on a thousand times.",7],
+["You toe the line. Across from you, someone who wants this as much as you do.",6],
+["That's fine. You've prepared for this person.",5],
+["Handshake. Back to your line. Drop into your stance.",6],
+["The ref raises his hand.",3],
+["Whistle.",3,"whistle"],
+["First period. You win the first hand fight. Collar tie, snap, circle.",6,"squeak"],
+["You set your pace. Pressure. He backs toward the edge.",6],
+["You see the opening. Shot. Finish. The crowd erupts.",6,"roar"],
+["Three points. You stay heavy. Next position.",6],
+["He escapes. Three to one. You expected that. Back to work.",6],
+["End of the first period. You walk to your coach. One breath. One adjustment.",7],
+["Second period. You choose bottom. Base, hands, up.",6],
+["He rides you hard. Feel his weight. You stay patient.",6],
+["You stand. You fight his hands. You cut free.",6,"cheer"],
+["Four to one.",4],
+["Then a scramble. He comes out on top. Two points. Four to three.",6,"roar"],
+["Notice your reaction. Frustration flashes. You name it. You breathe. You go back to work.",7],
+["Third period. Two minutes left. Your lungs burn. Your arms are heavy.",6],
+["This is the moment you've trained for in every last live go.",6],
+["Hands, feet, breathe.",5],
+["You push the pace. He's breaking. You feel it.",6,"squeak"],
+["Thirty seconds. The whole arena is on its feet.",6,"roar"],
+["Ten seconds. You keep attacking. You don't hold on. You wrestle.",6],
+["The buzzer.",4,"applause"],
+["Stay in this moment. Whatever happened on the scoreboard, you competed for six full minutes under the brightest lights.",8],
+["That's who you are. That's who you'll be when this night actually comes.",7],
+["Take a slow breath in. Let it go.",7],
+["When you're ready, open your eyes.",4]]};
+
+const ENVS={
+ gym:{name:"Small wrestling gym",mix:{ambience:.35,crowd:.12,react:.08,squeak:.55,whistle:.35,announcer:0,applause:.06,atmos:.25},verb:1.2,rate:.6},
+ hs:{name:"High-school tournament",mix:{ambience:.45,crowd:.42,react:.3,squeak:.4,whistle:.4,announcer:.25,applause:.2,atmos:.35},verb:2.2,rate:1},
+ big:{name:"Large tournament arena",mix:{ambience:.55,crowd:.6,react:.45,squeak:.3,whistle:.35,announcer:.35,applause:.3,atmos:.45},verb:3.4,rate:1.2},
+ champ:{name:"Championship atmosphere",mix:{ambience:.6,crowd:.7,react:.6,squeak:.25,whistle:.3,announcer:.4,applause:.4,atmos:.5},verb:3.8,rate:1.4},
+ finals:{name:"Intense championship finals",mix:{ambience:.65,crowd:.82,react:.75,squeak:.25,whistle:.35,announcer:.45,applause:.5,atmos:.55},verb:4.2,rate:1.6}
+};
+const LAYERS={ambience:"Arena ambience",crowd:"Crowd conversations",react:"Crowd reactions",squeak:"Shoes on the mat",whistle:"Referee whistle",announcer:"Announcer (distant)",applause:"Applause",atmos:"Tournament atmosphere"};
+
+const BREATH_PATTERNS=[
+ {id:"box",name:"Box breathing",d:[4,4,4,4],note:"The standard. Even sides, steady rhythm."},
+ {id:"pre",name:"Pre-match",d:[4,2,4,2],note:"Shorter holds. Keeps you sharp without going flat."},
+ {id:"slow",name:"Slow breathing",d:[5,0,6,0],note:"No holds. Long, easy breaths."},
+ {id:"recovery",name:"Post-match recovery",d:[3,0,6,0],note:"Long exhales to bring your heart rate down."},
+ {id:"focus",name:"Focus",d:[5,3,5,3],note:"Slightly longer cycle for a calm, narrow focus."},
+ {id:"relax",name:"Relaxation",d:[4,1,7,1],note:"Extended exhale to settle before bed or after a tough day."}
+];
+
+const JOURNAL_TEMPLATES={
+ daily:{name:"Daily check-in",qs:["How mentally prepared was I today?","Did I stay focused?","Did I maintain confidence?","Did I control my emotions?","What was my biggest challenge?","What did I learn?","What should I improve tomorrow?"]},
+ prepractice:{name:"Before practice",qs:["What is my one focus for practice today?","How is my energy (and why)?","Which standard will I hit no matter what?"]},
+ postpractice:{name:"After practice",qs:["Did I hit my focus?","When did I want to ease off, and what did I do?","One thing I did well","One thing to fix tomorrow"]},
+ precomp:{name:"Before competition",qs:["My three keys","What I'll do if I fall behind","My cue word","Why I'm prepared (evidence)"]},
+ win:{name:"After winning",qs:["What worked?","What broke down, even though I won?","My one fix","What I want to remember about this feeling"]},
+ loss:{name:"After losing",qs:["Two things that went well","What broke down?","One thing I'll train this week","What I'm telling myself about this loss, and is it true?"]}
+};
+
+const CODE_SECTIONS=[
+ ["identity","My identity","Three words and a sentence: what kind of wrestler are you?"],
+ ["purpose","My purpose","Why do you wrestle?"],
+ ["standards","My standards","Minimums you meet every day."],
+ ["rules","My personal rules","Rules you compete by (e.g. attack within 10 seconds of every restart)."],
+ ["strengths","My strengths","Mental and technical."],
+ ["weaknesses","My weaknesses","What you're working on."],
+ ["fears","My biggest fears","Name them so they lose power."],
+ ["mentality","My competitive mentality","How you want to compete."],
+ ["adversity","My response to adversity","What you do when you fall behind or get a bad call."],
+ ["prematch","My pre-match routine","Physical, mental, trigger."],
+ ["inmatch","My in-match mentality","Position cues and resets."],
+ ["postmatch","My post-match routine","How you review, win or lose."],
+ ["goals","My goals","Season goals and the process behind them."]
+];
+
+const CHALLENGES=[
+["Identity drives behavior.","Write your three-word identity.","Which word did you show most today?"],
+["Discipline beats motivation.","Set three daily standards and hit them today.","Which standard was hardest?"],
+["Breathing sets your energy.","Do 2 minutes of box breathing.","How did your body feel after?"],
+["Attention is limited.","Two-minute focus drill: count your returns.","How many times did you return?"],
+["Confidence comes from preparation.","Write five entries in your confidence bank.","Which entry means the most?"],
+["Visualization builds familiarity.","Complete one Visualization Room session.","What was the most vivid detail?"],
+["Nerves are readiness.","Write your pre-match signs and reframe each.","Which reframe feels most true?"],
+["Cue words cut through noise.","Choose cues for neutral, top and bottom.","Say them before drilling. Which stuck?"],
+["Toughness is trained.","Do one extra quality rep when tired.","What did the 'ease off' voice say?"],
+["Losses are information.","Do a three-question review of a recent match.","What's your one fix?"],
+["Controlled aggression wins.","Attack within 10 seconds of every restart today.","How many restarts did you hit?"],
+["Emotions are signals.","Write your trigger plan for your top trigger.","When might you use it this week?"],
+["Routines make every match familiar.","Write your short pre-match routine.","What's your final trigger?"],
+["One position at a time.","In practice, reset with one breath and one cue at every stoppage.","Did it help?"],
+["Recovery is training.","Do 3 minutes of recovery breathing after practice.","How did you sleep tonight?"],
+["Shrink the moment.","Write your biggest fear and shrink it to the next position.","How does it look now?"],
+["Standards remove debate.","Hit all three standards again.","How many days in a row?"],
+["The crowd is background.","Do the Hearing The Crowd session.","Where does your attention go now?"],
+["Plans should be simple.","Write three keys for your next live go.","Did you execute them?"],
+["Wins hide mistakes.","Review a win or good practice.","What broke down even though it went well?"],
+["Talk to yourself like a coach.","Rewrite three fear thoughts as instructions.","Which one will you use?"],
+["Fatigue is a warning, not a limit.","Use your third-period cue in the last go.","Rate your pace 1–10."],
+["Adversity reveals identity.","Do the Wrestling From Behind session.","What's your first thought when you fall behind?"],
+["Body language changes state.","Walk to every drill with chest up, eyes forward.","Did you feel different?"],
+["Evidence builds belief.","Add three entries to your confidence bank.","What did you prove today?"],
+["Composure is a choice.","Do the Staying Calm Under Pressure session.","When will you need composure most?"],
+["Gratitude fuels effort.","Thank a coach or partner today.","How did it change your practice?"],
+["Your code guides you.","Draft or update My Wrestling Code.","Which line matters most?"],
+["Prepare for the big stage.","Do Championship Night.","What do you feel when you hear your name?"],
+["You built this.","Read back your journal and re-take your assessment.","What changed most in 30 days?"]
+];
+/* ===== Quote library: public-domain sources and original Mat Mind lines ===== */
+const QUOTE_LIB=[
+["The impediment to action advances action. What stands in the way becomes the way.","Marcus Aurelius","resilience"],
+["Waste no more time arguing what a good man should be. Be one.","Marcus Aurelius","discipline"],
+["No man is free who is not master of himself.","Epictetus","discipline"],
+["First say to yourself what you would be, and then do what you have to do.","Epictetus","discipline"],
+["It is not things that disturb us, but our judgments about things.","Epictetus","emotion"],
+["We suffer more often in imagination than in reality.","Seneca","pressure"],
+["Difficulties strengthen the mind, as labor does the body.","Seneca","resilience"],
+["Luck is what happens when preparation meets opportunity.","Seneca","confidence"],
+["A journey of a thousand miles begins with a single step.","Lao Tzu","discipline"],
+["It does not matter how slowly you go as long as you do not stop.","Confucius","resilience"],
+["By failing to prepare, you are preparing to fail.","Benjamin Franklin","discipline"],
+["Well done is better than well said.","Benjamin Franklin","discipline"],
+["Do what you can, with what you have, where you are.","Theodore Roosevelt","resilience"],
+["Do the thing and you will have the power.","Ralph Waldo Emerson","confidence"],
+["Go confidently in the direction of your dreams.","Henry David Thoreau","confidence"],
+["Fall seven times, stand up eight.","Japanese proverb","resilience"],
+["The more you sweat in practice, the less you bleed in battle.","Proverb","discipline"],
+["A smooth sea never made a skilled sailor.","Proverb","resilience"],
+["Win the next position.","Mat Mind","focus"],
+["Six minutes. Every second of them.","Mat Mind","discipline"],
+["The score is information. The next position is the job.","Mat Mind","focus"],
+["Nerves mean you're ready, not that you're scared.","Mat Mind","pressure"],
+["That happened. What's next?","Mat Mind","resilience"],
+["Hands first. Everything else follows.","Mat Mind","focus"],
+["You don't rise to the occasion. You fall to your preparation.","Proverb","pressure"],
+["Be the one who's still wrestling when everyone else is surviving.","Mat Mind","discipline"],
+["The mat doesn't care who you were last season.","Mat Mind","confidence"],
+["Tired is a feeling, not a stop sign.","Mat Mind","resilience"],
+["Get off bottom like the mat is on fire.","Mat Mind","focus"],
+["Attack first. Make him react to you.","Mat Mind","confidence"],
+["A loss is a lesson with a scoreboard.","Mat Mind","resilience"],
+["Confidence is a receipt for work you already did.","Mat Mind","confidence"],
+["Show up the same on the bad days.","Mat Mind","discipline"],
+["Breathe. Reset. Go.","Mat Mind","emotion"],
+["Pressure is a privilege you earned by getting here.","Mat Mind","pressure"],
+["One more rep is where the separation happens.","Mat Mind","discipline"],
+["Your feelings get a vote. They don't get the final say.","Mat Mind","emotion"],
+["Champions review wins too.","Mat Mind","focus"],
+["Wrestle the person in front of you, not the name on the bracket.","Mat Mind","pressure"],
+["Stay heavy. Stay hungry.","Mat Mind","discipline"],
+["Bad practice, good lesson.","Mat Mind","resilience"],
+["The whistle doesn't know you're nervous.","Mat Mind","pressure"],
+["Discipline is remembering what you want.","Mat Mind","discipline"],
+["Hard days build the wrestler. Easy days just pass.","Mat Mind","resilience"],
+["Be relentless where it's uncomfortable.","Mat Mind","discipline"],
+["Calm is a skill. Train it.","Mat Mind","emotion"],
+["Every great comeback starts with one escape.","Mat Mind","resilience"],
+["Earn the third period in the practice room.","Mat Mind","discipline"],
+["Your opponent is human too. He's just as tired.","Mat Mind","confidence"]
+];
+
+/* ===== Offline coach flows ===== */
+const FLOWS={
+badpractice:{name:"Bad practice",kind:"debrief",tag:"resilience",steps:[
+ {say:"Bad practices happen to everyone, even the best kid in the room. Let's get what's useful out of this one and leave the rest on the mat."},
+ {ask:"How rough was it? 1 is a little off, 10 is the worst in a long time.",key:"rate",type:"scale"},
+ {ask:"What made it bad?",key:"why",type:"choice",opts:["Got beat up in live goes","Low energy, tired","Couldn't hit my stuff","Lost my head, frustrated","Coach was on me","Something outside wrestling"]},
+ {say:a=>({"Got beat up in live goes":"Getting beat up by good partners is how you get better. You found the holes in your game today, in practice, where it doesn't cost you anything.","Low energy, tired":"Some days the tank is low. Showing up and getting through it still counts. Check your sleep and food tonight; that's often the real cause.","Couldn't hit my stuff":"Off days with your moves are normal. Technique comes back fast. What matters is you kept shooting instead of shutting down.","Lost my head, frustrated":"Frustration means you care. The skill to build is catching it faster: name it, one breath, one cue, back to work.","Coach was on me":"Coaches push the ones they believe can take it. Pull out the one piece of feedback that's actually useful and drop the tone.","Something outside wrestling":"Stuff outside the room follows you in. That's normal. Be easy on yourself today, and if it's heavy, talk to someone you trust about it."})[a.why]},
+ {ask:"There's always something. What's one thing that actually went okay today?",key:"good",type:"text",ph:"I kept wrestling in the last go even though I was gassed"},
+ {ask:"What's the one thing you'll fix tomorrow? Make it specific.",key:"fix",type:"text",ph:"Hand-fight first before I shoot"},
+ {say:a=>`Here's the deal: you get tonight to be annoyed. Tomorrow you walk in and work on "${a.fix}". One bad practice doesn't change who you are. What you do tomorrow does.`},
+ {acts:[["Reset: 3-minute recovery breathing","breath:recovery:3"],["Read my quotes","go:quotes"]]}]},
+goodpractice:{name:"Good practice",kind:"debrief",tag:"confidence",steps:[
+ {say:"Good practices are evidence. Let's bank this one so you can pull it out before your next big match."},
+ {ask:"How good was it? 1 to 10.",key:"rate",type:"scale"},
+ {ask:"What was the best part?",key:"best",type:"choice",opts:["Hit my moves","Conditioning felt great","Stayed locked in","Handled tough partners","Kept my cool","Coach noticed"]},
+ {ask:"What exactly did you do that made it work? Be specific.",key:"how",type:"text",ph:"Kept my head up and stayed in good stance the whole time"},
+ {bank:"how"},
+ {say:a=>`Saved to your proof list: "${a.how}". This shows up on Match Day so you can read it before you step on the mat.`},
+ {ask:"What do you want to keep doing tomorrow?",key:"keep",type:"text",ph:"Same warm-up, same intensity"},
+ {say:"Good practices aren't luck. You did something right. Do it again tomorrow."},
+ {acts:[["Lock it in: replay it in the Visualization Room","viz:gameplan"],["Read my quotes","go:quotes"]]}]},
+badmatch:{name:"Bad match",kind:"debrief",tag:"resilience",steps:[
+ {say:"Tough one. It's okay to feel this. It means you care."},
+ {say:"Before anything else: breathe in for four, out for six. Do that three times, then keep going."},
+ {ask:"What happened?",key:"what",type:"choice",opts:["Lost a close one","Got pinned or teched","Wrestled scared or passive","One mistake cost me","Bad call","Won but wrestled bad"]},
+ {say:a=>({"Lost a close one":"Close losses sting the most because you were right there. That also means the gap is small and fixable.","Got pinned or teched":"Getting dominated hurts. It's also the clearest information you'll ever get about what to train. Every great wrestler has been there.","Wrestled scared or passive":"Wrestling tight happens when the moment feels bigger than the mat. That's a mental skill, and you can train it like any move.","One mistake cost me":"One position doesn't define the match. You also did a lot right to be in a spot where one mistake decided it.","Bad call":"Calls go against everyone sometimes. You can't control the ref. You can control making the match not close enough for a call to matter.","Won but wrestled bad":"Good on you for reviewing a win. That's what separates good from great."})[a.what]},
+ {ask:"Two things that went well. There are always two.",key:"good",type:"text",ph:"Got my escape fast. Hand-fighting in the first."},
+ {ask:"What broke down?",key:"broke",type:"text",ph:"Got ridden out the whole second period"},
+ {ask:"One thing you'll train this week.",key:"fix",type:"text",ph:"Stand-ups from bottom every day"},
+ {ask:"What are you telling yourself about this match right now? Be honest.",key:"story",type:"text",ph:"I'm never going to beat kids like that"},
+ {say:"Check that thought. Is it a fact or a story? \"I lost that match\" is a fact. \"I'm not good enough\" is a story you're adding."},
+ {ask:"Rewrite it as something true and useful.",key:"reframe",type:"text",ph:"I lost to a good kid and I know what to fix"},
+ {say:a=>`That's the version you take home. This week: ${a.fix}. Give yourself tonight, then get back to work.`},
+ {acts:[["Session: Losing and responding with confidence","viz:lose"],["Recovery breathing, 3 minutes","breath:recovery:3"],["Read my quotes","go:quotes"]]}]},
+goodmatch:{name:"Good match",kind:"debrief",tag:"confidence",steps:[
+ {say:"Nice work. Winners review wins too. Let's lock in what worked."},
+ {ask:"What kind of match was it?",key:"kind",type:"choice",opts:["Won big","Won a close one","Came back from behind","Lost but wrestled great","Beat someone I wasn't supposed to"]},
+ {ask:"What worked?",key:"worked",type:"text",ph:"Pushed the pace and he broke in the third"},
+ {bank:"worked"},
+ {ask:"What broke down, even though it went well?",key:"broke",type:"text",ph:"Gave up a reversal off a lazy ride"},
+ {ask:"One fix for next time.",key:"fix",type:"text"},
+ {ask:"What do you want to remember about how this felt?",key:"feel",type:"text",ph:"Calm before the whistle, attacking from the start"},
+ {say:a=>`Saved "${a.worked}" to your proof list. Next time you're nervous before a match, this is the receipt that says you can do it.`},
+ {acts:[["Replay it: Winning the match","viz:win"],["Read my quotes","go:quotes"]]}]}
+};
+function topic(id,name,tag,intro,q1,q2,concept,exercise,links){FLOWS[id]={name,kind:"topic",tag,steps:[{say:intro},q1,q2,{say:concept},{say:"Here's your exercise:\n\n"+exercise},{ask:"When will you do it? Pick a specific time or situation.",key:"plan",type:"text",ph:"Before every live go this week"},{say:a=>`Plan: ${a.plan}. Next time you open this topic, I'll ask how it went.`},{acts:links}]}}
+topic("fear","Fear of losing","pressure","Fear of losing is one of the most common things wrestlers deal with. Let's figure out what's underneath it.",
+ {ask:"When does it hit hardest?",key:"when",type:"choice",opts:["Night before","Warm-up","Walking to the mat","During the match","Against good opponents"]},
+ {ask:"What exactly are you afraid will happen if you lose?",key:"fear",type:"text",ph:"Letting my team down, looking bad"},
+ "Fear of losing usually comes from tying your worth to the result. When the result feels like a verdict on you, your body protects you by tightening up, and you wrestle not to lose. The fix is moving your focus from the outcome, which you don't control, to positions and effort, which you do.",
+ "1. Write your fear down exactly as it sounds in your head.\n2. Under it, write: \"What I control is ___.\" Fill in three things (hand-fighting, pace, getting off bottom).\n3. Before your next match, read only the bottom half.",
+ [["Session: Walking into the arena","viz:arena"],["Module 7: Fear, anxiety and pressure","module:7"]]);
+topic("anxiety","Competition anxiety","pressure","Nerves before competing are normal. Let's make them work for you instead of against you.",
+ {ask:"What does it feel like in your body?",key:"body",type:"choice",opts:["Stomach is sick","Heart racing","Shaky, weak","Can't stop thinking","All of it"]},
+ {ask:"What's the thought that shows up with it?",key:"thought",type:"text",ph:"What if I get taken down right away"},
+ "Your body does the same thing before a match as it does when you're excited: heart rate up, adrenaline, butterflies. The difference is the label. Calling it \"ready\" instead of \"scared\" helps you use the energy. If it's too much, long exhales bring it down.",
+ "1. Name the feeling: \"That's my body getting ready.\"\n2. Do six breaths: in for 4, out for 6.\n3. Set one task for the first 10 seconds: \"Win the first hand fight.\"",
+ [["Pre-match breathing, 2 minutes","breath:pre:2"],["Session: Staying calm under pressure","viz:calm"]]);
+topic("confidence","Low confidence","confidence","Confidence isn't something you either have or don't. It's built. Let's find where yours is leaking.",
+ {ask:"When do you feel least confident?",key:"when",type:"choice",opts:["Against ranked kids","After a loss","In practice","When I'm behind","All the time lately"]},
+ {ask:"Name one thing you've done this season you're proud of, even something small.",key:"proud",type:"text"},
+ "Real confidence comes from evidence: work you've put in and things you've already done. Confidence based on results disappears after one loss. Confidence based on preparation stays. Your job is to collect proof and read it when doubt shows up.",
+ "1. Write five specific things you've done in practice that prove you're prepared.\n2. Save them in your proof list (good practice and good match debriefs add to it automatically).\n3. Read the list the night before and the morning of every competition.",
+ [["Session: Standing across from your opponent","viz:opponent"],["Module 4: Confidence and self-belief","module:4"]]);
+topic("discipline","Lack of discipline","discipline","Discipline is a skill, not a personality. Let's find where it's breaking down.",
+ {ask:"What slips first?",key:"slips",type:"choice",opts:["Sleep","Eating right","Effort in drills","Showing up early","Extra work outside practice"]},
+ {ask:"What usually gets in the way?",key:"why",type:"text",ph:"Phone at night, friends, tired after school"},
+ "Motivation is a feeling and it comes and goes. Discipline is a decision you make once so you don't have to keep making it. The trick is a few small standards you hit every day, not a big plan you hit sometimes.",
+ "1. Pick three daily standards (yes-or-no things).\n2. Check them every night for 14 days.\n3. Miss one? No punishment. Just hit it the next day.",
+ [["Module 3: Discipline and consistency","module:3"],["Start the 30-day challenge","go:challenge"]]);
+topic("frustration","Frustration and anger","emotion","Frustration on the mat costs positions. Let's build a plan for when it shows up.",
+ {ask:"What sets you off most?",key:"trigger",type:"choice",opts:["Bad calls","Getting ridden","Can't score","Trash talk","Making the same mistake"]},
+ {ask:"What do you usually do when it hits?",key:"react",type:"text",ph:"Throw a wild headlock, stop listening to coach"},
+ "Emotions are signals, not orders. You can feel frustrated and still choose your next move. Naming the emotion actually turns it down a little, and one long breath buys you the second you need to pick your action.",
+ "1. Name it: \"That's frustration.\"\n2. One long exhale.\n3. Say your cue word and go to the next position.\nPractice it in drills by having a partner give you fake bad calls.",
+ [["Session: Handling adversity","viz:adversity"],["Module 10: Emotional control","module:10"]]);
+topic("focus","Focus problems","focus","Focus is where your attention goes. Let's figure out where yours is wandering.",
+ {ask:"What pulls your attention most?",key:"pull",type:"choice",opts:["The crowd","The score","My coach or parents","Thinking ahead","Replaying mistakes"]},
+ {ask:"When in a match do you lose focus most?",key:"when",type:"text",ph:"After I give up points"},
+ "Nobody stays focused the whole time. The skill is noticing you drifted and coming back fast. A reset trigger, a physical action plus a cue word, makes coming back automatic.",
+ "1. Pick a reset action (tap your ankle band, touch the circle).\n2. Pair it with a cue word (\"hands first\").\n3. Use it at every stoppage in practice this week.",
+ [["Session: Hearing the crowd","viz:crowd"],["Module 5: Focus and concentration","module:5"]]);
+topic("pressure","Performance pressure","pressure","Pressure shows up when a match feels like it means more than six minutes. Let's shrink it back down.",
+ {ask:"Where's the pressure coming from?",key:"from",type:"choice",opts:["Myself","Parents","Coach","Team","Rankings, college"]},
+ {ask:"What match or moment is weighing on you?",key:"match",type:"text"},
+ "Pressure grows when you think about everything the match means. Shrink it back to the size of the mat: a series of positions, and your only job is the next one. What it means can wait until after.",
+ "1. Write everything this match \"means.\"\n2. Cross it all out.\n3. Write your three keys: neutral, top, bottom.\n4. That's the whole match.",
+ [["Session: Championship match","viz:champ"],["Pre-match breathing, 2 minutes","breath:pre:2"]]);
+topic("prep","Preparing for a match","pressure","Let's get you ready for your next match.",
+ {ask:"When is it?",key:"when",type:"choice",opts:["Today","Tomorrow","This weekend","Next week"]},
+ {ask:"What do you know about your opponent or the bracket?",key:"opp",type:"text",ph:"Lefty, likes to shoot low singles"},
+ "Good preparation is simple: a short plan, a routine you trust, and a few minutes of mental rehearsal. Keep the plan to three keys so you can actually remember them under pressure.",
+ "1. Write your three keys (neutral, top, bottom) in Match Day.\n2. Do one visualization the night before.\n3. Before your match: warm-up, 2 minutes of breathing, read your code, then your trigger.",
+ [["Open Match Day","go:match"],["Championship Night","viz:night"]]);
+
+/* ===== Build-your-own visualization (no AI) ===== */
+const VB_SIT={
+ tied:["Picture the scoreboard. Tied. Third period, one minute left.",["The crowd is getting louder. You hear your coach yelling one word: pressure.",5,"roar"],"He's tired. So are you. You've trained for this exact moment.",["You hand-fight, you circle, you look for your opening.",6,"squeak"]],
+ down:["Picture the scoreboard. You're down three in the second period.",["Notice the urge to rush. Let it pass. That happened. What's next?",6],["You start on bottom. Base, hands, up. You stand and cut free.",6,"cheer"],"Back on your feet, you set up your shot instead of forcing it."],
+ up:["You're up two late in the third. Notice the urge to back up and protect it.",["Instead you keep wrestling. Hands, pressure, attack.",6,"squeak"],"He's desperate now. He reaches. You stay in good position.","You don't hold on. You score again."],
+ first:["It's your first match of the tournament. The gym is loud and crowded.",["You hear whistles from mats all around you.",5,"whistle"],"Your body feels tight. That's just the rust coming off.",["First hand fight. You win it. Now you're in the tournament.",6,"squeak"]],
+ rematch:["Across from you is the wrestler who beat you last time.",["You remember the match. Then you let it go. Today is new.",6],"You know what he likes. You've drilled your answer all week.",["He goes to his move. You're ready for it. You counter and score.",6,"cheer"]],
+ seed:["Across from you is a higher seed. People expect you to lose.",["You don't care about expectations. You care about the next position.",6],"You attack first. You make him wrestle your match.",["You score first. The crowd notices.",6,"roar"]]
+};
+const VB_SITNAMES={tied:"Tied in the third period",down:"Down by 3 in the second",up:"Up by 2, closing it out",first:"First match of the tournament",rematch:"Rematch against someone who beat me",seed:"Wrestling a higher seed"};
+const VB_SKILL={
+ confidence:["Remind yourself of the work you've done. Every rep is in your body right now.","Chest up. Eyes forward. You belong here."],
+ discipline:["You stick to your plan even when it gets hard.","Same effort in the last ten seconds as the first ten."],
+ focus:["The crowd fades. It's just you, him, and the next position.","Hands, head, hips. Nothing else matters right now."],
+ emotion:["A call goes against you. You feel the heat. You name it, breathe, and let it go.","Calm on the outside, switched on inside."],
+ pressure:["Your heart pounds. That's energy. You breathe in for four, out for six.","It's still just wrestling. One position at a time."],
+ resilience:["He scores. You respond right away. That happened. What's next?","You never stop wrestling. That's who you are."]
+};
+function buildViz(sit,skill,note){const L=[["Close your eyes. Take a slow breath in, and let it out slowly.",5],["Feel your feet on the mat. Feel the tape on your fingers.",5],["Hear the arena around you. Shoes squeaking, a whistle somewhere, the crowd.",6,"squeak"]];
+ VB_SIT[sit].forEach(x=>L.push(Array.isArray(x)?x:[x,5]));VB_SKILL[skill].forEach(x=>L.push([x,6]));
+ if(note&&note.trim())L.push(["See yourself doing this: "+note.trim().slice(0,160),8]);
+ L.push(["The final whistle. Whatever the score, you wrestled your match.",5,"whistle"],["Take one more slow breath. Open your eyes when you're ready.",4]);
+ return{id:"c"+Date.now(),letter:"★",title:VB_SITNAMES[sit],skill,env:S.viz.env,custom:true,lines:L}}
+/* ================= state & persistence ================= */
+const KEY="matmind:v1";
+const DEFAULTS=()=>({v:1,updatedAt:0,onboarded:false,
+ profile:{name:"",age:"",exp:"",years:"",level:"",goals:"",strengths:"",weaknesses:"",fears:""},
+ assessments:[], modules:{}, vizLog:[], breathLog:[], journal:[], chat:[], customViz:[],
+ code:{sections:{},doc:"",updated:0}, challenges:{}, bank:[], quotes:[], flowPlans:{},
+ comp:{items:[{t:"Weigh-in done, refueled and hydrated sensibly",d:false},{t:"Physical warm-up: sweat, stance, motion, shots",d:false},{t:"3-minute visualization",d:false},{t:"2 minutes of breathing",d:false},{t:"Read My Wrestling Code",d:false},{t:"Set three match intentions",d:false}],intent:["","",""]},
+ viz:{env:"hs",mix:null,master:.8,narr:1,length:"standard",mode:"guided",ambientMin:10,voice:"",autoDim:true},
+ breath:{pattern:"box",d:[4,4,4,4],minutes:2,skipHolds:false,voice:true,ambience:true}
+});
+let S=DEFAULTS();
+function merge(base,o){if(!o||typeof o!=="object")return base;for(const k in o){if(o[k]&&typeof o[k]==="object"&&!Array.isArray(o[k])&&base[k]&&typeof base[k]==="object"&&!Array.isArray(base[k]))base[k]=merge(base[k],o[k]);else if(o[k]!==undefined)base[k]=o[k]}return base}
+try{const raw=localStorage.getItem(KEY);if(raw)S=merge(DEFAULTS(),JSON.parse(raw))}catch(e){}
+const cloud={db:null,ref:null,status:"device",timer:null};
+function trimState(){S.chat=S.chat.slice(-40);S.journal=S.journal.slice(-150);S.vizLog=S.vizLog.slice(-400);S.breathLog=S.breathLog.slice(-400);S.customViz=S.customViz.slice(-10)}
+function save(){S.updatedAt=Date.now();trimState();
+ try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+ if(cloud.ref){clearTimeout(cloud.timer);cloud.timer=setTimeout(()=>{cloud.ref.set({json:JSON.stringify(S),updatedAt:S.updatedAt}).then(()=>{cloud.status="account";paintSync()}).catch(()=>{cloud.status="error";paintSync()})},900)}}
+async function initCloud(){
+ const use=window.claude&&window.claude.use;if(!use){paintSync();return}
+ try{const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);
+  if(!db||!user){paintSync();return}
+  const uid=await user.id();if(!uid){paintSync();return}
+  const ref=db.doc("data/users/"+uid+"/state");
+  const snap=await Promise.race([ref.get(),new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),10000))]);
+  cloud.ref=ref;cloud.status="account";
+  if(snap.exists){const d=snap.data();if(d&&d.json&&(d.updatedAt||0)>(S.updatedAt||0)){S=merge(DEFAULTS(),JSON.parse(d.json));try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){};route()}}
+  else if(S.updatedAt){save()}
+ }catch(e){cloud.status=cloud.ref?"error":"device"}
+ paintSync()}
+function paintSync(){const el=document.getElementById("sync");if(!el)return;el.textContent=cloud.status==="account"?"Saved to account":cloud.status==="error"?"Sync issue · saved here":"Saved on device"}
+
+let downloadsNs=null;
+(async()=>{if(!(window.claude&&window.claude.use))return;try{downloadsNs=await window.claude.use("downloads")}catch(e){} if(curView()==="code")route()})();
+
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+const fmtTime=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+const fmtDate=d=>new Date(d).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+const daysAgo=n=>Date.now()-n*864e5;
+function toast(t){const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2200)}
+function latestScores(){const a=S.assessments[S.assessments.length-1];return a?a.scores:null}
+function modState(id){return S.modules[id]||(S.modules[id]={read:false,quiz:{},assign:"",reflect:"",ex:false,doneAt:0})}
+function modDone(id){const m=S.modules[id];if(!m)return false;const mod=MODULES.find(x=>x.id==id);return m.read&&Object.keys(m.quiz).length>=mod.quiz.length&&m.reflect.trim().length>0}
+function checkModDone(id){const m=modState(id);if(!m.doneAt&&modDone(id)){m.doneAt=Date.now();toast("Module complete")}}
+function growthDims(){const sc=latestScores();if(!sc)return["pressure","confidence"];return Object.keys(DIMS).sort((a,b)=>sc[a]-sc[b]).slice(0,2)}
+function strengthDims(){const sc=latestScores();if(!sc)return[];return Object.keys(DIMS).sort((a,b)=>sc[b]-sc[a]).slice(0,2)}
+function recModules(){const g=growthDims();const open=MODULES.filter(m=>!modDone(m.id));const pri=open.filter(m=>g.includes(m.skill));return(pri.length?pri:open).slice(0,3)}
+function recViz(){const g=growthDims();return VIZ.filter(v=>g.includes(v.skill)).slice(0,3)}
+function allViz(){return[CHAMPIONSHIP_NIGHT,...VIZ,...S.customViz]}
+const ICON={
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ academy:'<path d="M2 8l10-5 10 5-10 5z"/><path d="M6 10v5c3 2.5 9 2.5 12 0v-5"/>',
+ viz:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/>',
+ breathe:'<rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="4" cy="12" r="1.6" fill="currentColor"/>',
+ coach:'<path d="M4 5h16v11H9l-5 4z"/>',
+ more:'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>'};
+const svgI=(k,extra="")=>`<svg viewBox="0 0 24 24" aria-hidden="true" ${extra}>${ICON[k]}</svg>`;
+const PLAY='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',RESTART='<svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>',STOP='<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg>';
+
+/* ================= audio engine (synthesized in real time) ================= */
+const Arena={ctx:null,master:null,verb:null,verbIn:null,layers:{},timers:[],running:false,env:"hs",duck:1,calmNode:null,keepAlive:null,
+ ensure(){if(this.ctx)return;const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error("Web Audio not supported");
+  try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+  this.ctx=new C();this.master=this.ctx.createGain();this.master.gain.value=.8;this.master.connect(this.ctx.destination);
+  this.verbIn=this.ctx.createGain();this.verb=this.ctx.createConvolver();this.verbIn.connect(this.verb);this.verb.connect(this.master);
+  this.white=this.noiseBuf("white");this.pink=this.noiseBuf("pink");this.brown=this.noiseBuf("brown");this.clapBuf=this.makeApplause();
+  this.setVerb(2.2)},
+ unlock(){this.ensure();if(this.ctx.state!=="running")this.ctx.resume();
+  if(!this.keepAlive){try{const a=new Audio(silentWav());a.loop=true;a.volume=.01;a.setAttribute("playsinline","");a.play().catch(()=>{});this.keepAlive=a}catch(e){}}
+  else this.keepAlive.play().catch(()=>{})},
+ noiseBuf(type){const n=this.ctx.sampleRate*4,b=this.ctx.createBuffer(2,n,this.ctx.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0,last=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;if(type==="white")d[i]=w*.5;else if(type==="pink"){b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926}else{last=(last+.02*w)/1.02;d[i]=last*3.5}}}return b},
+ makeApplause(){const sr=this.ctx.sampleRate,n=sr*3,b=this.ctx.createBuffer(2,n,sr);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let k=0;k<900;k++){const s=Math.floor(Math.random()*(n-sr*.03)),len=Math.floor(sr*(.006+Math.random()*.012)),amp=.15+Math.random()*.35;for(let i=0;i<len;i++)d[s+i]+=(Math.random()*2-1)*amp*Math.exp(-i/(len*.25))}}return b},
+ setVerb(sec){const sr=this.ctx.sampleRate,n=Math.floor(sr*sec),b=this.ctx.createBuffer(2,n,sr);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6)}this.verb.buffer=b},
+ src(buf){const s=this.ctx.createBufferSource();s.buffer=buf;s.loop=true;s.loopStart=Math.random();return s},
+ bus(k,wet){const g=this.ctx.createGain();g.gain.value=0;const dry=this.ctx.createGain();dry.gain.value=1-wet*.6;const w=this.ctx.createGain();w.gain.value=wet;g.connect(dry);dry.connect(this.master);g.connect(w);w.connect(this.verbIn);this.layers[k]={g,nodes:[g,dry,w]};return g},
+ level(k,v){const L=this.layers[k];if(L)L.g.gain.setTargetAtTime(v*(L.scale||1),this.ctx.currentTime,.25)},
+ loop(fn,minS,maxS){const tick=()=>{if(!this.running)return;fn();const r=ENVS[this.env].rate;this.timers.push(setTimeout(tick,(minS+Math.random()*(maxS-minS))*1000/r))};this.timers.push(setTimeout(tick,(minS*Math.random())*1000))},
+ start(envKey,mix){this.unlock();this.stop(true);this.env=envKey;this.running=true;const E=ENVS[envKey];this.setVerb(E.verb);const ctx=this.ctx,now=ctx.currentTime;
+  // 1 ambience
+  let g=this.bus("ambience",.5);let s=this.src(this.brown),f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=420;s.connect(f);f.connect(g);s.start();this.layers.ambience.nodes.push(s);this.layers.ambience.scale=.9;
+  // 2 crowd babble
+  g=this.bus("crowd",.55);this.layers.crowd.scale=1.1;this.crowdBands=[];[380,720,1150,1700].forEach((fr,i)=>{const s=this.src(this.pink),bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=fr;bp.Q.value=1.6;const vg=ctx.createGain();vg.gain.value=.5;const p=ctx.createStereoPanner?ctx.createStereoPanner():null;s.connect(bp);bp.connect(vg);if(p){p.pan.value=(i%2?.5:-.5)*Math.random();vg.connect(p);p.connect(g)}else vg.connect(g);s.start();this.layers.crowd.nodes.push(s);this.crowdBands.push(vg)});
+  this.loop(()=>{const t=ctx.currentTime;this.crowdBands.forEach(b=>b.gain.setTargetAtTime(.25+Math.random()*.9,t,.08))},.12,.3);
+  // 3 reactions
+  g=this.bus("react",.65);this.loop(()=>this.burst(.5+Math.random()*.4,1.2+Math.random()*1.8),6,16);
+  // 4 squeaks
+  g=this.bus("squeak",.35);this.loop(()=>this.squeaks(1+Math.floor(Math.random()*4)),1.2,4.5);
+  // 5 whistle
+  g=this.bus("whistle",.6);this.loop(()=>this.whistle(false),12,32);
+  // 6 announcer
+  g=this.bus("announcer",.8);this.loop(()=>this.announce(),18,40);
+  // 7 applause
+  g=this.bus("applause",.6);s=this.src(this.clapBuf);const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=700;this.applaudGain=ctx.createGain();this.applaudGain.gain.value=.12;s.connect(hp);hp.connect(this.applaudGain);this.applaudGain.connect(g);s.start();this.layers.applause.nodes.push(s);
+  this.loop(()=>this.applaud(.6+Math.random()*.4,2+Math.random()*3),22,55);
+  // 8 atmosphere: hall hum + mat slams
+  g=this.bus("atmos",.4);[58,116].forEach((fr,i)=>{const o=ctx.createOscillator();o.frequency.value=fr;const og=ctx.createGain();og.gain.value=i?.02:.05;o.connect(og);og.connect(g);o.start();this.layers.atmos.nodes.push(o)});
+  s=this.src(this.brown);const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=140;const sg=ctx.createGain();sg.gain.value=.5;s.connect(lp);lp.connect(sg);sg.connect(g);s.start();this.layers.atmos.nodes.push(s);
+  this.loop(()=>this.thud(),5,14);
+  this.applyMix(mix||E.mix)},
+ applyMix(mix){for(const k in mix)this.level(k,mix[k]*this.duckFor(k))},
+ duckFor(k){return["crowd","react","applause","announcer"].includes(k)?this.duck:1},
+ setDuck(v,mix){this.duck=v;if(this.running)this.applyMix(mix)},
+ burst(peak,hold,big){const ctx=this.ctx,t=ctx.currentTime,s=ctx.createBufferSource();s.buffer=this.pink;const bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=big?1000:800+Math.random()*400;bp.Q.value=.6;const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak*(big?1.6:1),t+(big?.35:.6));g.gain.setValueAtTime(peak*(big?1.6:1),t+hold);g.gain.exponentialRampToValueAtTime(.001,t+hold+2.2);s.connect(bp);bp.connect(g);g.connect(this.layers.react?this.layers.react.g:this.master);s.start(t,Math.random()*2);s.stop(t+hold+2.5)},
+ squeaks(n,near){const ctx=this.ctx;for(let i=0;i<n;i++){const t=ctx.currentTime+i*(.08+Math.random()*.18),o=ctx.createOscillator();o.type="sawtooth";const f0=1500+Math.random()*900,d=.05+Math.random()*.11;o.frequency.setValueAtTime(f0,t);o.frequency.linearRampToValueAtTime(f0*(Math.random()<.5?1.35:.75),t+d);const bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=2400;bp.Q.value=3;const g=ctx.createGain();const pk=(near?.22:.09)*(.5+Math.random()*.5);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pk,t+.01);g.gain.exponentialRampToValueAtTime(.0005,t+d);let out=g;if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=Math.random()*1.6-.8;g.connect(p);out=p}o.connect(bp);bp.connect(g);out.connect(this.layers.squeak.g);o.start(t);o.stop(t+d+.05)}},
+ whistle(near){const ctx=this.ctx,blasts=Math.random()<.35?2:1;for(let b=0;b<blasts;b++){const t=ctx.currentTime+b*.55,dur=near?.75:.35+Math.random()*.45;const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(near?.16:.06,t+.02);g.gain.setValueAtTime(near?.16:.06,t+dur-.05);g.gain.linearRampToValueAtTime(0,t+dur);const am=ctx.createGain();am.gain.value=.6;const lfo=ctx.createOscillator();lfo.type="square";lfo.frequency.value=24+Math.random()*8;const lg=ctx.createGain();lg.gain.value=.4;lfo.connect(lg);lg.connect(am.gain);[2950,3180].forEach(fr=>{const o=ctx.createOscillator();o.frequency.value=fr+Math.random()*60;o.connect(am);o.start(t);o.stop(t+dur+.05)});const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=near?7000:3800;am.connect(g);g.connect(lp);let out=lp;if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=near?0:Math.random()*1.4-.7;lp.connect(p);out=p}out.connect(near?this.master:this.layers.whistle.g);if(near){const w=ctx.createGain();w.gain.value=.4;lp.connect(w);w.connect(this.verbIn)}lfo.start(t);lfo.stop(t+dur+.05)}},
+ announce(){const ctx=this.ctx,t=ctx.currentTime,dur=1.6+Math.random()*2.2,o=ctx.createOscillator();o.type="sawtooth";let f=105+Math.random()*30;o.frequency.setValueAtTime(f,t);for(let x=.15;x<dur;x+=.18){f*=1+(Math.random()-.5)*.12;o.frequency.linearRampToValueAtTime(f,t+x)}const f1=ctx.createBiquadFilter();f1.type="bandpass";f1.frequency.value=700;f1.Q.value=3;const f2=ctx.createBiquadFilter();f2.type="bandpass";f2.frequency.value=1500;f2.Q.value=4;const g=ctx.createGain();g.gain.setValueAtTime(0,t);let x=0;while(x<dur){const syl=.1+Math.random()*.16;g.gain.linearRampToValueAtTime(.18+Math.random()*.15,t+x+syl*.3);g.gain.linearRampToValueAtTime(.02,t+x+syl);x+=syl+(Math.random()<.15?.25:0)}g.gain.linearRampToValueAtTime(0,t+dur+.1);const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=2600;o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(lp);lp.connect(this.layers.announcer.g);o.start(t);o.stop(t+dur+.2)},
+ applaud(peak,hold){if(!this.applaudGain)return;const t=this.ctx.currentTime,g=this.applaudGain.gain;g.cancelScheduledValues(t);g.setTargetAtTime(peak,t,.3);g.setTargetAtTime(.12,t+hold,1.2)},
+ thud(){const ctx=this.ctx,t=ctx.currentTime,o=ctx.createOscillator();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);const g=ctx.createGain();g.gain.setValueAtTime(.35*Math.random()+.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.connect(g);g.connect(this.layers.atmos.g);o.start(t);o.stop(t+.4)},
+ cue(c){if(!this.running)return;if(c==="whistle")this.whistle(true);else if(c==="cheer")this.burst(.8,1.6);else if(c==="roar"){this.burst(1,2.5,true);this.applaud(.8,3)}else if(c==="squeak")this.squeaks(4,true);else if(c==="applause"){this.applaud(1,4.5);this.burst(.7,2.2)}else if(c==="hush"){["crowd","react"].forEach(k=>{const L=this.layers[k];if(!L)return;const t=this.ctx.currentTime,v=L.g.gain.value;L.g.gain.setTargetAtTime(v*.25,t,.4);L.g.gain.setTargetAtTime(v,t+4,1.2)})}},
+ stop(keep){this.running=false;this.timers.forEach(clearTimeout);this.timers=[];const t=this.ctx?this.ctx.currentTime:0;for(const k in this.layers){const L=this.layers[k];try{L.g.gain.setTargetAtTime(0,t,.2)}catch(e){}const nodes=L.nodes;setTimeout(()=>nodes.forEach(n=>{try{n.stop&&n.stop()}catch(e){}try{n.disconnect()}catch(e){}}),keep?0:900)}this.layers={};this.applaudGain=null;if(!keep&&this.keepAlive)this.keepAlive.pause()},
+ setMaster(v){if(this.master)this.master.gain.setTargetAtTime(v,this.ctx.currentTime,.1)},
+ calm(on){this.ensure();if(on){this.unlock();if(this.calmNode)return;const s=this.src(this.brown),lp=this.ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=320;const g=this.ctx.createGain();g.gain.value=0;g.gain.setTargetAtTime(.35,this.ctx.currentTime,.8);s.connect(lp);lp.connect(g);g.connect(this.master);s.start();this.calmNode={s,g}}else if(this.calmNode){const c=this.calmNode;this.calmNode=null;c.g.gain.setTargetAtTime(0,this.ctx.currentTime,.4);setTimeout(()=>{try{c.s.stop()}catch(e){}},1500)}}
+};
+function silentWav(){const sr=8000,n=sr,buf=new ArrayBuffer(44+n*2),v=new DataView(buf);const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);let bin="";const u=new Uint8Array(buf);for(let i=0;i<u.length;i++)bin+=String.fromCharCode(u[i]);return"data:audio/wav;base64,"+btoa(bin)}
+
+/* ================= speech ================= */
+const Voice={voices:[],load(){if(!("speechSynthesis" in window))return;this.voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang))},
+ pick(){const want=S.viz.voice;return this.voices.find(v=>v.name===want)||this.voices.find(v=>/en-US/i.test(v.lang)&&/natural|enhanced|premium|google/i.test(v.name))||this.voices.find(v=>/en-US/i.test(v.lang))||this.voices[0]},
+ say(text,{rate=.92,vol=1,onend}={}){if(!("speechSynthesis" in window)){onend&&setTimeout(onend,text.split(" ").length*400);return null}const u=new SpeechSynthesisUtterance(text);const v=this.pick();if(v)u.voice=v;u.rate=rate;u.pitch=.95;u.volume=vol;let fired=false;const done=()=>{if(fired)return;fired=true;onend&&onend()};u.onend=done;u.onerror=done;speechSynthesis.speak(u);const guard=setTimeout(done,(text.split(/\s+/).length/1.3+5)*1000);u.addEventListener("end",()=>clearTimeout(guard));return u},
+ cancel(){if("speechSynthesis" in window)speechSynthesis.cancel()}};
+if("speechSynthesis" in window){Voice.load();speechSynthesis.onvoiceschanged=()=>Voice.load()}
+
+/* ================= router ================= */
+const VIEWS=["quotes","home","academy","viz","breathe","coach","more","code","journal","progress","match","challenge","profile","settings","onboard"];
+function curView(){const h=location.hash.slice(1);if(/^module-\d+$/.test(h))return h;return VIEWS.includes(h)?h:"home"}
+function go(v){if(location.hash.slice(1)===v)route();else location.hash=v}
+window.addEventListener("hashchange",route);
+function route(){let v=curView();if((!S.onboarded||ob.active)&&v!=="onboard")v="onboard";
+ if(v!=="breathe"&&BR.running)BR.stop(true);
+ const main=$("#main");const tabFor=v.startsWith("module-")?"academy":["code","journal","progress","match","challenge","profile","settings","quotes"].includes(v)?"more":v;
+ document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-current",t.dataset.go===tabFor?"page":"false"));
+ $(".tabs").hidden=v==="onboard";
+ const fn=RENDER[v.startsWith("module-")?"module":v];main.innerHTML=fn(v);window.scrollTo(0,0);
+ if(v==="breathe"){BR.paint();BR.paintControls()}if(v==="coach"){const m=$("#msgs");if(m)m.lastElementChild?.scrollIntoView({block:"end"})}}
+
+/* ================= views ================= */
+const RENDER={};
+const ob={step:0,scores:{},active:false};
+RENDER.onboard=()=>{const p=S.profile;const st=ob.step;
+ if(st===0)return`<div class="stack-lg" style="padding-top:12px"><div class="hero"><div class="mat"></div><div class="stack"><div class="eyebrow">Wrestling mental performance</div><h1>Own the<br><em>six minutes</em><br>in your head.</h1><p class="muted" style="max-width:34ch">Build your own mindset, rehearse the arena with your eyes closed, and train the mental side like you train your shots.</p></div></div>
+ <div class="stack"><p>First, a quick assessment. It takes about three minutes and shapes what the app recommends.</p><button class="btn red block" data-act="ob-next">Start assessment</button></div></div>`;
+ if(st===1)return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Step 1 of 3</div><h2>About you</h2></div>
+ <label class="f">Name or username<input type="text" id="p-name" data-bind="profile.name" value="${esc(p.name)}" autocomplete="nickname"></label>
+ <div class="grid2"><label class="f">Age range<select id="p-age" data-bind="profile.age">${["","Under 14","14–15","16–17","18–22","23+"].map(o=>`<option ${p.age===o?"selected":""}>${o}</option>`).join("")}</select></label>
+ <label class="f">Years wrestling<select id="p-years" data-bind="profile.years">${["","First season","1–2","3–5","6–9","10+"].map(o=>`<option ${p.years===o?"selected":""}>${o}</option>`).join("")}</select></label></div>
+ <label class="f">Competitive level<select id="p-level" data-bind="profile.level">${["","Youth / club","Middle school","JV","Varsity","College","Open / senior"].map(o=>`<option ${p.level===o?"selected":""}>${o}</option>`).join("")}</select></label>
+ <label class="f">Wrestling experience<input type="text" id="p-exp" data-bind="profile.exp" value="${esc(p.exp)}" placeholder="Folkstyle, freestyle, weight class, best result…"></label>
+ <label class="f">Goals this season<textarea id="p-goals" data-bind="profile.goals" placeholder="Place at sectionals, make varsity, win more close matches…">${esc(p.goals)}</textarea></label>
+ <div class="row between"><button class="btn ghost" data-act="ob-back">Back</button><button class="btn red" data-act="ob-next">Next</button></div></div>`;
+ if(st===2){const qs={confidence:"How confident are you going into matches?",discipline:"How consistent are your habits and effort, even on bad days?",focus:"How well do you stay focused on the current position?",emotion:"How well do you control frustration and anger in matches?",pressure:"How well do you perform when the match matters most?",resilience:"How quickly do you bounce back from mistakes and losses?"};
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Step 2 of 3</div><h2>Rate yourself</h2><p class="muted small">1 is low, 10 is high. Be honest. Nobody sees this but you.</p></div>
+ ${Object.keys(DIMS).map(k=>`<div class="stack" style="gap:8px"><div class="row between"><b>${DIMS[k]}</b><span class="mono muted">${ob.scores[k]||"–"}</span></div><p class="small muted">${qs[k]}</p><div class="scale" role="group" aria-label="${DIMS[k]}">${Array.from({length:10},(_,i)=>`<button data-act="ob-score" data-k="${k}" data-v="${i+1}" aria-pressed="${ob.scores[k]===i+1}">${i+1}</button>`).join("")}</div></div>`).join("")}
+ <div class="row between"><button class="btn ghost" data-act="ob-back">Back</button><button class="btn red" data-act="ob-next" ${Object.keys(ob.scores).length<6?"disabled":""}>Next</button></div></div>`}
+ if(st===3)return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Step 3 of 3</div><h2>Your mental game</h2></div>
+ <label class="f">Mental strengths<textarea id="p-str" data-bind="profile.strengths" placeholder="I don't give up on bottom, I stay calm in scrambles…">${esc(p.strengths)}</textarea></label>
+ <label class="f">Mental weaknesses<textarea id="p-weak" data-bind="profile.weaknesses" placeholder="I get passive when I'm ahead, I replay mistakes…">${esc(p.weaknesses)}</textarea></label>
+ <label class="f">Biggest competition fears<textarea id="p-fear" data-bind="profile.fears" placeholder="Getting pinned in front of everyone, letting my team down…">${esc(p.fears)}</textarea></label>
+ <div class="row between"><button class="btn ghost" data-act="ob-back">Back</button><button class="btn red" data-act="ob-finish">See my profile</button></div></div>`;
+ return"";};
+
+function profileCard(){const sc=latestScores();if(!sc)return"";const st=strengthDims(),gr=growthDims();
+ return`<div class="card stack"><div class="row between"><h3>Mental profile</h3><span class="pill">Self-rated</span></div>
+ ${Object.keys(DIMS).map(k=>`<div class="stack" style="gap:4px"><div class="row between small"><span>${DIMS[k]}</span><span class="mono">${sc[k]}/10</span></div><div class="bar"><i style="width:${sc[k]*10}%;${gr.includes(k)?"":"background:var(--fg)"}"></i></div></div>`).join("")}
+ <p class="small"><b>Strengths:</b> ${st.map(k=>DIMS[k]).join(", ")}. <b>Train next:</b> ${gr.map(k=>DIMS[k]).join(", ")}.</p>
+ <p class="small muted">These are your own ratings, used to point you to lessons. They aren't a clinical or scientifically validated measure.</p></div>`}
+
+RENDER.profile=()=>{const recs=recModules(),rv=recViz();const p=S.profile;
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Assessment</div><h1>${esc(p.name||"Your")} profile</h1></div>${profileCard()}
+ <div class="stack"><h3>Recommended lessons</h3>${recs.map(m=>`<button class="tile" data-go="module-${m.id}"><span class="pill">${DIMS[m.skill]}</span><span class="k">${m.id}. ${esc(m.title)}</span><span class="small muted">${esc(m.summary)}</span></button>`).join("")}</div>
+ <div class="stack"><h3>Recommended sessions</h3><div class="grid2">${rv.map(v=>`<button class="tile" data-act="viz-open" data-id="${v.id}"><span class="mono muted small">${v.letter}</span><span class="k">${esc(v.title)}</span></button>`).join("")}<button class="tile" data-act="breath-quick" data-p="${latestScores()&&latestScores().pressure<6?"pre":"box"}"><span class="mono muted small">Breathing</span><span class="k">${latestScores()&&latestScores().pressure<6?"Pre-match":"Box"} breathing</span></button></div></div>
+ ${S.assessments.length>1?`<div class="card stack"><h3>History</h3>${S.assessments.slice().reverse().slice(0,6).map(a=>`<div class="row between small"><span>${fmtDate(a.date)}</span><span class="mono muted">avg ${(Object.values(a.scores).reduce((x,y)=>x+y,0)/6).toFixed(1)}</span></div>`).join("")}</div>`:""}
+ <div class="row"><button class="btn red" data-act="retake">Retake assessment</button><button class="btn" data-act="edit-profile">Edit profile answers</button></div></div>`};
+
+RENDER.home=()=>{const p=S.profile;const day=nextChallenge();const ch=CHALLENGES[day-1];const rec=recModules()[0];const w=weekStats();
+ const hr=new Date().getHours();const greet=hr<12?"Morning":hr<18?"Afternoon":"Evening";
+ return`<div class="stack-lg"><div class="hero"><div class="mat"></div><div class="stack"><div class="eyebrow">${greet}${p.name?", "+esc(p.name):""}</div><h1>Win the<br><em>next position.</em></h1>
+ <div class="row"><button class="btn red" data-act="viz-open" data-id="night">Championship Night</button><button class="btn" data-go="match">Match day</button></div></div></div>
+ <div class="card stack"><div class="row between"><h3>How did it go?</h3><span class="small muted">3-min check-in</span></div><div class="grid2">${[["badpractice","Bad practice"],["goodpractice","Good practice"],["badmatch","Bad match"],["goodmatch","Good match"]].map(([k,t])=>`<button class="btn" data-act="flow-start" data-f="${k}">${t}</button>`).join("")}</div></div>
+ <button style="all:unset;cursor:pointer;display:block" data-go="quotes" aria-label="Open quotes">${quoteCard(dailyQuote(),"Today's quote")}</button>
+ ${coreQuotes().length?(()=>{const c=coreQuotes()[dayNum()%coreQuotes().length];return`<button class="card stack" style="text-align:left;gap:6px" data-go="quotes"><span class="eyebrow">I live by this</span><p style="font-size:1.1rem;font-weight:600">“${esc(c.t)}”</p>${c.a?`<p class="small muted">— ${esc(c.a)}</p>`:""}</button>`})():`<button class="tile" data-go="quotes"><span class="k">Add the quotes you live by</span><span class="small muted">They'll show here every day.</span></button>`}
+ <div class="grid3"><div class="tile"><span class="stat">${w.viz}</span><span class="small muted">Visualizations this week</span></div><div class="tile"><span class="stat">${w.breath}</span><span class="small muted">Breathing sessions</span></div><div class="tile"><span class="stat">${MODULES.filter(m=>modDone(m.id)).length}<span class="muted" style="font-size:1.2rem">/16</span></span><span class="small muted">Modules done</span></div></div>
+ ${ch?`<button class="card stack" style="text-align:left" data-go="challenge"><div class="row between"><span class="eyebrow">Day ${day} of 30</span><span class="pill">${Object.values(S.challenges).filter(c=>c.done).length} done</span></div><h3>${esc(ch[0])}</h3><p class="small muted">${esc(ch[1])}</p></button>`:`<div class="card"><h3>30-day program complete</h3><p class="small muted">Retake your assessment to see what changed.</p></div>`}
+ <div class="grid2"><button class="tile" data-act="breath-quick" data-p="box"><span class="mono small muted">2 min</span><span class="k">Box breathing</span></button><button class="tile" data-go="viz"><span class="mono small muted">12 sessions</span><span class="k">Visualization room</span></button>
+ <button class="tile" data-go="coach"><span class="mono small muted">8 topics</span><span class="k">Work on something</span></button><button class="tile" data-go="journal"><span class="mono small muted">${S.journal.length} entries</span><span class="k">Journal</span></button></div>
+ ${rec?`<div class="stack"><div class="row between"><h3>Up next in the academy</h3><button class="link" data-go="academy">All modules</button></div><button class="tile" data-go="module-${rec.id}"><span class="pill">${DIMS[rec.skill]}</span><span class="k">${rec.id}. ${esc(rec.title)}</span><span class="small muted">${esc(rec.summary)}</span></button></div>`:""}
+ ${profileCard()}</div>`};
+
+function weekStats(){const since=daysAgo(7);return{viz:S.vizLog.filter(x=>x.date>since).length,breath:S.breathLog.filter(x=>x.date>since).length}}
+
+RENDER.academy=()=>{const done=MODULES.filter(m=>modDone(m.id)).length;const recIds=recModules().map(m=>m.id);
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Wrestling Academy</div><h1>16 modules</h1><div class="bar"><i style="width:${done/16*100}%"></i></div><p class="small muted">${done} of 16 complete. A module is complete when you read it, answer the quiz and write your reflection.</p></div>
+ <div class="stack">${MODULES.map(m=>{const st=S.modules[m.id];const d=modDone(m.id);const started=st&&(st.read||Object.keys(st.quiz).length);
+ return`<button class="tile" data-go="module-${m.id}"><div class="row between"><span class="mono small muted">Module ${String(m.id).padStart(2,"0")}</span>${d?'<span class="pill done">Complete</span>':recIds.includes(m.id)?'<span class="pill red">Recommended</span>':started?'<span class="pill">In progress</span>':""}</div><span class="k">${esc(m.title)}</span><span class="small muted">${esc(m.summary)}</span></button>`}).join("")}</div></div>`};
+
+RENDER.module=v=>{const id=+v.split("-")[1];const m=MODULES.find(x=>x.id===id);const st=modState(id);const nx=MODULES.find(x=>x.id===id+1);
+ return`<div class="stack-lg"><button class="link" data-go="academy">← All modules</button>
+ <div class="stack"><div class="row"><span class="eyebrow">Module ${id} · ${DIMS[m.skill]}</span>${modDone(id)?'<span class="pill done">Complete</span>':""}</div><h1>${esc(m.title)}</h1><p class="muted">${esc(m.summary)}</p></div>
+ <div class="card stack" style="gap:10px"><b class="small">Module checklist</b>${[["Read the lesson",st.read],["Answer the quiz",Object.keys(st.quiz).length>=m.quiz.length],["Write your reflection",!!st.reflect.trim()],["Do the exercise (optional)",st.ex]].map(([t,d])=>`<div class="row small"><span style="color:${d?"var(--ok)":"var(--dim)"}">${d?"●":"○"}</span>${t}</div>`).join("")}</div>
+ ${m.lessons.map((l,i)=>`<section class="stack"><span class="mono small muted">Lesson ${i+1}</span><h2>${esc(l.h)}</h2><div class="prose">${l.ps.map(p=>`<p>${esc(p)}</p>`).join("")}</div></section>`).join("")}
+ <section class="stack"><h3>On the mat</h3><p class="note" style="color:var(--fg)">${esc(m.example)}</p></section>
+ ${!st.read?`<button class="btn" data-act="mod-read" data-id="${id}">I've read the lesson</button>`:""}
+ <section class="card stack"><div class="eyebrow">Exercise</div><h3>${esc(m.exercise.name)}</h3><ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">${m.exercise.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><label class="row small" style="gap:10px"><input type="checkbox" id="ex-${id}" data-act="mod-ex" data-id="${id}" ${st.ex?"checked":""} style="width:20px;height:20px;accent-color:var(--red-hi)"> I did this exercise</label></section>
+ <section class="stack"><div class="eyebrow">Assignment</div><label class="f">${esc(m.assignment)}<textarea id="as-${id}" data-bind="modules.${id}.assign">${esc(st.assign)}</textarea></label></section>
+ <section class="stack" id="quiz"><div class="eyebrow">Quiz</div>${m.quiz.map((q,qi)=>{const ans=st.quiz[qi];return`<div class="stack" style="gap:8px"><b>${qi+1}. ${esc(q.q)}</b>${q.o.map((o,oi)=>`<button class="quiz-opt ${ans!==undefined?(oi===q.a?"right":oi===ans?"wrong":""):""}" data-act="quiz" data-id="${id}" data-q="${qi}" data-o="${oi}" ${ans!==undefined?"disabled":""}>${esc(o)}</button>`).join("")}${ans!==undefined?`<p class="small ${ans===q.a?"":"muted"}">${ans===q.a?"Correct. ":"Not quite. "}${esc(q.w)}</p>`:""}</div>`}).join("")}
+ ${Object.keys(st.quiz).length>=m.quiz.length?`<p class="mono small">Score: ${m.quiz.filter((q,i)=>st.quiz[i]===q.a).length}/${m.quiz.length} <button class="link" data-act="quiz-reset" data-id="${id}">Retry</button></p>`:""}</section>
+ <section class="stack"><div class="eyebrow">Reflection</div><label class="f">${esc(m.reflect)}<textarea id="rf-${id}" data-bind="modules.${id}.reflect" data-mod="${id}">${esc(st.reflect)}</textarea></label></section>
+ ${nx?`<button class="tile" data-go="module-${nx.id}"><span class="mono small muted">Next module</span><span class="k">${nx.id}. ${esc(nx.title)}</span></button>`:`<button class="btn red" data-go="code">Build My Wrestling Code</button>`}</div>`};
+
+/* ----- Visualization room ----- */
+RENDER.viz=()=>{const V=S.viz;const mix=V.mix||ENVS[V.env].mix;
+ return`<div class="stack-lg"><div class="hero" style="padding-block:34px 26px"><div class="mat"></div><div class="stack"><div class="eyebrow">The Visualization Room</div><h1>Close your eyes.<br><em>You're on the mat.</em></h1><p class="muted small" style="max-width:32ch">Headphones on. Pick an arena and a session. Once it starts, you don't need to look at your phone.</p></div></div>
+ <button class="card stack" style="text-align:left;border-color:var(--red)" data-act="viz-open" data-id="night"><div class="row between"><span class="eyebrow">Signature session</span><span class="pill mono">~${Math.round(estDur(CHAMPIONSHIP_NIGHT)/60)} min</span></div><h2>Championship Night</h2><p class="small muted">Tunnel walk, introductions, six full minutes under the lights. Full arena audio with narration.</p></button>
+ <div class="stack"><h3>Arena</h3><div class="row">${Object.entries(ENVS).map(([k,e])=>`<button class="chip" data-act="viz-env" data-k="${k}" aria-pressed="${V.env===k}">${e.name}</button>`).join("")}</div></div>
+ <div class="stack"><h3>Sessions</h3><div class="stack">${[...VIZ,...S.customViz].map(v=>`<button class="tile" data-act="viz-open" data-id="${v.id}" style="flex-direction:row;align-items:center;gap:14px"><span class="mono" style="color:var(--red-hi);font-size:1.1rem;width:1.4em">${esc(v.letter)}</span><span style="flex:1;min-width:0"><span class="k" style="display:block">${esc(v.title)}</span><span class="small muted">${DIMS[v.skill]||"Personal"} · ~${Math.round(estDur(v)/60)} min${v.custom?" · AI":""}</span></span></button>`).join("")}</div></div>
+ <details class="card"><summary style="cursor:pointer;font-weight:700">Session settings</summary><div class="stack" style="margin-top:14px">
+  <div class="stack" style="gap:6px"><b class="small">Mode</b><div class="row"><button class="chip" data-act="viz-set" data-k="mode" data-v="guided" aria-pressed="${V.mode==="guided"}">Guided narration</button><button class="chip" data-act="viz-set" data-k="mode" data-v="ambient" aria-pressed="${V.mode==="ambient"}">Ambient only</button></div></div>
+  <div class="stack" style="gap:6px"><b class="small">Pacing (time to imagine between lines)</b><div class="row">${["short","standard","extended"].map(l=>`<button class="chip" data-act="viz-set" data-k="length" data-v="${l}" aria-pressed="${V.length===l}">${l[0].toUpperCase()+l.slice(1)}</button>`).join("")}</div></div>
+  <div class="stack" style="gap:6px"><b class="small">Ambient-only length</b><div class="row">${[5,10,15,20].map(n=>`<button class="chip" data-act="viz-set" data-k="ambientMin" data-v="${n}" aria-pressed="${V.ambientMin===n}">${n} min</button>`).join("")}</div></div>
+  ${Voice.voices.length?`<label class="f">Narrator voice<select id="viz-voice" data-bind="viz.voice"><option value="">Automatic</option>${Voice.voices.map(v=>`<option ${V.voice===v.name?"selected":""}>${esc(v.name)}</option>`).join("")}</select></label>`:`<p class="small muted">No narration voice found on this device. Ambient audio still works.</p>`}
+  <label class="row small" style="gap:10px"><input type="checkbox" id="viz-dim" data-act="viz-autodim" ${V.autoDim?"checked":""} style="width:20px;height:20px;accent-color:var(--red-hi)"> Dim the screen after a few seconds</label>
+ </div></details>
+ <details class="card"><summary style="cursor:pointer;font-weight:700">Sound mixer</summary><div class="stack" style="margin-top:14px">
+  <label class="f">Master volume<input type="range" id="mx-master" min="0" max="1" step=".05" value="${V.master}" data-act="mx" data-k="master"></label>
+  <label class="f">Narration volume<input type="range" id="mx-narr" min="0" max="1" step=".05" value="${V.narr}" data-act="mx" data-k="narr"></label>
+  ${Object.entries(LAYERS).map(([k,n])=>`<label class="f">${n}<input type="range" id="mx-${k}" min="0" max="1" step=".05" value="${mix[k]}" data-act="mx" data-k="${k}"></label>`).join("")}
+  <div class="row"><button class="btn sm" data-act="mx-preview">${Arena.running&&!PL.on?"Stop preview":"Preview arena"}</button><button class="btn sm ghost" data-act="mx-reset">Reset to arena default</button></div>
+ </div></details>
+ <div class="card stack"><div class="eyebrow">Build your own</div><h3>Custom session</h3>
+  <label class="f">Match situation<select id="cv-sit">${Object.entries(VB_SITNAMES).map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select></label>
+  <label class="f">Mental skill to train<select id="cv-skill">${Object.entries(DIMS).map(([k,n])=>`<option value="${k}" ${growthDims()[0]===k?"selected":""}>${n}</option>`).join("")}</select></label>
+  <label class="f">See yourself doing this (optional)<input type="text" id="cv-note" placeholder="Hitting my high crotch off a snap"></label>
+  <button class="btn red" data-act="viz-gen">Start my session</button>
+ </div>
+ <p class="small muted">All arena sound is generated live on your device, no recordings. Keep the screen on for the most reliable playback; some phones pause narration when locked.</p></div>`};
+
+/* ----- player ----- */
+const PL={on:false,s:null,idx:0,playing:false,elapsed:0,total:0,tick:null,wait:null,dimT:null,wake:null,ambient:false,
+ scale(){return{short:.65,standard:1,extended:1.6}[S.viz.length]||1},
+ open(id){const s=allViz().find(v=>v.id===id);if(!s)return;this.s=s;this.idx=0;this.elapsed=0;this.ambient=S.viz.mode==="ambient"||!("speechSynthesis" in window);this.total=this.ambient?S.viz.ambientMin*60:estDur(s,this.scale());this.on=true;this.renderUI();this.play()},
+ renderUI(){let el=$("#player");if(!el){el=document.createElement("div");el.id="player";el.className="player";document.body.appendChild(el)}
+  el.innerHTML=`<div class="ptop"><button class="btn sm ghost" data-act="pl-exit" aria-label="Exit session">Exit</button><span class="mono small muted">${esc(this.s.title)}</span><button class="btn sm ghost" data-act="pl-dim">Dim</button></div>
+  <div class="stack" style="gap:28px"><div class="ring live" id="pl-ring"></div><p class="line" id="pl-line" aria-live="polite">${this.ambient?"Ambient mode. Close your eyes and run the match in your head.":"Headphones on. Find a comfortable seat."}</p></div>
+  <div class="pcontrols"><div class="stack" style="gap:6px"><div class="bar"><i id="pl-bar" style="width:0%"></i></div><div class="row between mono small muted"><span id="pl-el">0:00</span><span>${ENVS[S.viz.env].name}</span><span id="pl-tot">${fmtTime(this.total)}</span></div></div>
+  <div class="row" style="justify-content:center;gap:22px"><button class="pbtn" data-act="pl-restart" aria-label="Restart">${RESTART}</button><button class="pbtn big" id="pl-pp" data-act="pl-pp" aria-label="Pause">${PAUSE}</button><button class="pbtn" data-act="pl-exit" aria-label="Stop">${STOP}</button></div>
+  <label class="f small" style="font-weight:500">Volume<input type="range" id="pl-vol" min="0" max="1" step=".05" value="${S.viz.master}" data-act="mx" data-k="master"></label>
+  <p class="small muted" style="text-align:center">🎧 Headphones recommended · tap anywhere to show controls</p></div>`;
+  el.onclick=e=>{if(el.classList.contains("dim")){el.classList.remove("dim");e.stopPropagation();this.armDim()}};
+  try{if("mediaSession" in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:this.s.title,artist:"Mat Mind · Visualization Room"});navigator.mediaSession.setActionHandler("pause",()=>this.pause());navigator.mediaSession.setActionHandler("play",()=>this.play())}}catch(e){}},
+ armDim(){clearTimeout(this.dimT);if(S.viz.autoDim&&this.playing)this.dimT=setTimeout(()=>$("#player")?.classList.add("dim"),9000)},
+ async play(){this.playing=true;try{Arena.start(S.viz.env,S.viz.mix||ENVS[S.viz.env].mix);Arena.setMaster(S.viz.master)}catch(e){toast("Audio isn't supported in this browser")}
+  try{if(navigator.wakeLock)this.wake=await navigator.wakeLock.request("screen")}catch(e){}
+  $("#pl-pp")&&($("#pl-pp").innerHTML=PAUSE,$("#pl-pp").setAttribute("aria-label","Pause"));$("#pl-ring")?.classList.add("live");
+  clearInterval(this.tick);this.tick=setInterval(()=>{if(!this.playing)return;this.elapsed++;this.paint();if(this.ambient&&this.elapsed>=this.total)this.finish()},1000);
+  if(!this.ambient)this.speakLine();this.armDim()},
+ speakLine(){if(!this.playing)return;const L=this.s.lines[this.idx];if(!L){this.finish();return}const [t,p,cue]=L;$("#pl-line")&&($("#pl-line").textContent=t);if(cue)setTimeout(()=>Arena.cue(cue),400);
+  const mix=S.viz.mix||ENVS[S.viz.env].mix;Arena.setDuck(.6,mix);
+  Voice.say(t,{vol:S.viz.narr,onend:()=>{if(!this.playing)return;Arena.setDuck(1,mix);clearTimeout(this.wait);this.wait=setTimeout(()=>{this.idx++;this.speakLine()},p*this.scale()*1000)}})},
+ pause(){this.playing=false;clearTimeout(this.wait);clearTimeout(this.dimT);Voice.cancel();Arena.stop();$("#player")?.classList.remove("dim");$("#pl-pp")&&($("#pl-pp").innerHTML=PLAY,$("#pl-pp").setAttribute("aria-label","Play"));$("#pl-ring")?.classList.remove("live")},
+ toggle(){this.playing?this.pause():this.play()},
+ restart(){this.pause();this.idx=0;this.elapsed=0;this.paint();this.play()},
+ paint(){const pct=Math.min(100,this.elapsed/this.total*100);$("#pl-bar")&&($("#pl-bar").style.width=pct+"%");$("#pl-el")&&($("#pl-el").textContent=fmtTime(this.elapsed))},
+ finish(){this.log(true);this.pause();$("#pl-line")&&($("#pl-line").textContent="Session complete. Take that feeling with you.");$("#pl-bar")&&($("#pl-bar").style.width="100%")},
+ log(done){if(this.logged||this.elapsed<20)return;this.logged=true;S.vizLog.push({id:this.s.id,title:this.s.title,date:Date.now(),secs:this.elapsed,done});save()},
+ exit(){this.log(this.elapsed>=this.total*.8);this.pause();this.on=false;this.logged=false;clearInterval(this.tick);try{this.wake&&this.wake.release()}catch(e){}$("#player")?.remove();route()}};
+function estDur(s,scale=1){return s.lines.reduce((a,[t,p])=>a+t.split(/\s+/).length/2.3+p*scale+.4,0)}
+
+/* ----- Breathing room ----- */
+const PH=["Inhale","Hold","Exhale","Hold"];
+const BR={running:false,paused:false,t0:0,acc:0,raf:null,lastPhase:-1,
+ d(){const b=S.breath;return b.d.map((x,i)=>(i%2&&b.skipHolds)?0:x)},
+ cycle(){return this.d().reduce((a,b)=>a+b,0)},
+ rounds(){return Math.max(1,Math.round(S.breath.minutes*60/this.cycle()))},
+ elapsed(){return this.acc+(this.running&&!this.paused?(performance.now()-this.t0)/1000:0)},
+ start(){if(this.running)return;this.running=true;this.paused=false;this.acc=0;this.t0=performance.now();this.lastPhase=-1;if(S.breath.ambience)Arena.calm(true);else if(S.breath.voice)Arena.unlock();this.loop();this.paintControls()},
+ pause(){if(!this.running||this.paused)return;this.acc=this.elapsed();this.paused=true;Voice.cancel();Arena.calm(false);this.paintControls()},
+ resume(){if(!this.paused)return;this.paused=false;this.t0=performance.now();if(S.breath.ambience)Arena.calm(true);this.lastPhase=-1;this.loop();this.paintControls()},
+ stop(silent){const secs=this.elapsed();cancelAnimationFrame(this.raf);if(this.running&&secs>=20){S.breathLog.push({date:Date.now(),secs:Math.round(secs),pattern:S.breath.pattern});save();if(!silent)toast("Logged "+fmtTime(secs)+" of breathing")}this.running=false;this.paused=false;this.acc=0;Voice.cancel();Arena.calm(false);if(!silent){this.paint();this.paintControls()}},
+ restart(){this.stop(true);this.start()},
+ state(){const d=this.d(),cyc=this.cycle(),el=this.elapsed(),total=this.rounds()*cyc;if(el>=total)return{done:true,el:total,round:this.rounds()};const inC=el%cyc;let acc=0,ph=0;for(;ph<4;ph++){if(inC<acc+d[ph])break;acc+=d[ph]}return{ph,frac:d[ph]?(inC-acc)/d[ph]:0,left:Math.ceil(acc+d[ph]-inC-1e-6),round:Math.floor(el/cyc)+1,el,total}},
+ loop(){cancelAnimationFrame(this.raf);const step=()=>{if(!this.running||this.paused)return;const s=this.state();if(s.done){this.paint(s);if(S.breath.voice)Voice.say("Session complete.");this.stop();return}if(s.ph!==this.lastPhase){this.lastPhase=s.ph;if(S.breath.voice)Voice.say(PH[s.ph],{rate:.9})}this.paint(s);this.raf=requestAnimationFrame(step)};this.raf=requestAnimationFrame(step)},
+ paint(st){const svg=$("#bx");if(!svg)return;const s=st||(this.running?this.state():null);const pts=[[20,300],[20,20],[300,20],[300,300],[20,300]];
+  let x=20,y=300,ph=-1;if(s&&!s.done){ph=s.ph;const a=pts[ph],b=pts[ph+1];x=a[0]+(b[0]-a[0])*s.frac;y=a[1]+(b[1]-a[1])*s.frac}
+  for(let i=0;i<4;i++){const e=$("#bs"+i);if(e)e.setAttribute("stroke",i===ph?"var(--red-hi)":"var(--line)")}
+  const dot=$("#bdot");dot.setAttribute("cx",x);dot.setAttribute("cy",y);const glow=$("#bglow");glow.setAttribute("cx",x);glow.setAttribute("cy",y);
+  $("#bcount").textContent=s?(s.done?"✓":s.left):this.d()[0];$("#bphase").textContent=s?(s.done?"Done":PH[s.ph]):"Ready";
+  $("#bround").textContent=`Round ${s?Math.min(s.round,this.rounds()):1} of ${this.rounds()}`;$("#belapsed").textContent=fmtTime(s?s.el:0)+" / "+fmtTime(this.rounds()*this.cycle())},
+ paintControls(){const c=$("#bctl");if(c)c.innerHTML=brControls()}};
+function brControls(){if(!BR.running)return`<button class="btn red block" data-act="br-start">Start session</button>`;
+ return`<div class="grid3"><button class="btn ${BR.paused?"red":""}" data-act="${BR.paused?"br-resume":"br-pause"}">${BR.paused?"Resume":"Pause"}</button><button class="btn" data-act="br-restart">Restart</button><button class="btn" data-act="br-end">End session</button></div>`}
+RENDER.breathe=()=>{const b=S.breath;const pat=BREATH_PATTERNS.find(p=>p.id===b.pattern);
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">The Breathing Room</div><h1>Follow the four sides.</h1></div>
+ <div class="box-wrap"><svg id="bx" viewBox="0 0 320 320" role="img" aria-label="Breathing guide">
+  <line id="bs0" x1="20" y1="300" x2="20" y2="20" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/><line id="bs1" x1="20" y1="20" x2="300" y2="20" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/><line id="bs2" x1="300" y1="20" x2="300" y2="300" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/><line id="bs3" x1="300" y1="300" x2="20" y2="300" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>
+  <text x="8" y="160" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono,monospace" transform="rotate(-90 8 160)" text-anchor="middle">INHALE ${BR.d()[0]}</text><text x="160" y="10" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="middle">HOLD ${BR.d()[1]}</text><text x="314" y="160" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono,monospace" transform="rotate(90 314 160)" text-anchor="middle">EXHALE ${BR.d()[2]}</text><text x="160" y="318" fill="var(--dim)" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="middle">HOLD ${BR.d()[3]}</text>
+  <circle id="bglow" cx="20" cy="300" r="22" fill="var(--red-hi)" opacity=".22"/><circle id="bdot" cx="20" cy="300" r="10" fill="var(--red-hi)"/></svg>
+  <div class="box-center"><span class="box-count mono" id="bcount">${BR.d()[0]}</span><span class="box-phase" id="bphase">Ready</span></div></div>
+ <div class="row between mono small muted"><span id="bround">Round 1 of ${BR.rounds()}</span><span id="belapsed">0:00</span></div>
+ <div id="bctl">${brControls()}</div>
+ <p class="note">Breathe comfortably. You can shorten or skip holds, breathe normally, or stop at any time. If you feel dizzy or uncomfortable, stop and breathe normally.</p>
+ <div class="stack"><h3>Exercise</h3><div class="row">${BREATH_PATTERNS.map(p=>`<button class="chip" data-act="br-pat" data-p="${p.id}" aria-pressed="${b.pattern===p.id}">${p.name}</button>`).join("")}<button class="chip" data-act="br-pat" data-p="custom" aria-pressed="${b.pattern==="custom"}">Custom</button></div><p class="small muted">${esc(pat?pat.note:"Your own intervals.")}</p></div>
+ <div class="stack"><h3>Length</h3><div class="row">${[1,2,3,5,10].map(n=>`<button class="chip" data-act="br-min" data-v="${n}" aria-pressed="${b.minutes===n}">${n} min</button>`).join("")}</div></div>
+ <div class="stack"><h3>Intervals (seconds)</h3><div class="grid2">${PH.map((n,i)=>`<div class="tile" style="gap:8px"><span class="small muted">${n}</span><div class="row between"><button class="btn sm" data-act="br-step" data-i="${i}" data-dv="-1" aria-label="Less ${n}">−</button><span class="stat mono" style="font-size:1.6rem">${b.d[i]}</span><button class="btn sm" data-act="br-step" data-i="${i}" data-dv="1" aria-label="More ${n}">+</button></div></div>`).join("")}</div></div>
+ <div class="card stack" style="gap:4px">${[["skipHolds","Skip holds (breathe in and out only)"],["voice","Voice guidance"],["ambience","Background ambience"]].map(([k,t])=>`<label class="check" style="border:0;padding:8px 0"><input type="checkbox" id="br-${k}" data-act="br-toggle" data-k="${k}" ${b[k]?"checked":""}><span>${t}</span></label>`).join("")}</div>
+ ${S.breathLog.length?`<p class="small muted">${S.breathLog.length} sessions logged · ${Math.round(S.breathLog.reduce((a,x)=>a+x.secs,0)/60)} minutes total</p>`:""}</div>`};
+
+/* ----- Coach (offline, guided) ----- */
+const FL={id:null,step:0,ans:{},log:[],steps:[],saved:false};
+function entryName(t){return(JOURNAL_TEMPLATES[t]||FLOWS[t]||{name:"Entry"}).name+(FLOWS[t]?(FLOWS[t].kind==="debrief"?" debrief":" · coach"):"")}
+function flowFill(x){let t=typeof x==="function"?x(FL.ans):x;return t.replace(/\{name\}/g,S.profile.name||"")}
+function flowStart(id){const f=FLOWS[id];if(!f)return;FL.id=id;FL.step=0;FL.ans={};FL.log=[];FL.saved=false;FL.steps=[...f.steps];
+ const prev=S.flowPlans[id];if(f.kind==="topic"&&prev)FL.steps.unshift({ask:`Last time your plan was: "${prev}". How did it go?`,key:"review",type:"choice",opts:["It worked","Partly","Didn't get to it"]},{say:a=>({"It worked":"Good. That's evidence the approach works for you. Let's build on it.","Partly":"Partly is progress. Let's tighten it up so it's easier to stick with.","Didn't get to it":"No problem. Let's make the plan smaller and more specific this time."})[a.review]});
+ flowAdvance();if(curView()==="coach")route();else go("coach")}
+function flowAdvance(){while(FL.step<FL.steps.length){const st=FL.steps[FL.step];if(st.say){FL.log.push({r:"c",t:flowFill(st.say)});FL.step++;continue}if(st.bank){const v=(FL.ans[st.bank]||"").trim();if(v)S.bank.push({t:v,date:Date.now()});FL.step++;continue}break}
+ const st=FL.steps[FL.step];if(st&&st.acts&&!FL.saved){FL.saved=true;const f=FLOWS[FL.id];const a={};FL.steps.forEach(s=>{if(s.ask&&FL.ans[s.key]!==undefined)a[s.ask.replace(/^Last time.*/,"Review of last plan")]=String(FL.ans[s.key])});S.journal.push({t:FL.id,date:Date.now(),a,rate:FL.ans.rate?+FL.ans.rate:null});if(f.kind==="topic"&&FL.ans.plan)S.flowPlans[FL.id]=FL.ans.plan;S.bank=S.bank.slice(-60);save()}}
+function flowAnswer(v){const st=FL.steps[FL.step];if(!st||!st.ask)return;v=String(v??"").trim();if(!v){toast("Write a few words, even short is fine");return}
+ FL.ans[st.key]=st.type==="scale"?+v:v;FL.log.push({r:"u",t:st.type==="scale"?v+" / 10":v});FL.step++;flowAdvance();route();setTimeout(()=>{const f=$("#flow-in");if(f)f.focus({preventScroll:true});$("#flow-end")?.scrollIntoView({block:"end",behavior:"smooth"})},30)}
+function flowAct(v){const [k,x,y]=v.split(":");FL.id=null;
+ if(k==="breath"){const p=BREATH_PATTERNS.find(b=>b.id===x)||BREATH_PATTERNS[0];try{Arena.unlock()}catch(e){}S.breath.pattern=p.id;S.breath.d=[...p.d];S.breath.minutes=+y||2;save();go("breathe");setTimeout(()=>BR.start(),0)}
+ else if(k==="viz"){route();PL.open(x)}else if(k==="module")go("module-"+x);else if(k==="go")go(x);else go("home")}
+function flowInput(){const st=FL.steps[FL.step];if(!st)return"";
+ if(st.acts){const q=quoteFor(FLOWS[FL.id].tag);return`<div class="stack" id="flow-end"><p class="small muted">Saved to your journal.</p>${quoteCard(q,"Take this with you")}${st.acts.map(([l,v])=>`<button class="btn block" data-act="flow-act" data-v="${v}">${esc(l)}</button>`).join("")}<button class="btn red block" data-act="flow-act" data-v="done">Done</button></div>`}
+ if(st.type==="scale")return`<div class="scale" id="flow-end" role="group" aria-label="Rating">${Array.from({length:10},(_,i)=>`<button data-act="flow-choice" data-v="${i+1}">${i+1}</button>`).join("")}</div>`;
+ if(st.type==="choice")return`<div class="stack" id="flow-end" style="gap:8px">${st.opts.map(o=>`<button class="quiz-opt" data-act="flow-choice" data-v="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+ return`<div class="composer" id="flow-end"><textarea id="flow-in" rows="2" placeholder="${esc(st.ph||"Type here…")}"></textarea><button class="btn red" data-act="flow-next">Next</button></div>`}
+RENDER.coach=()=>{
+ if(FL.id){const f=FLOWS[FL.id];const cur=FL.steps[FL.step];const q=cur&&cur.ask?cur.ask:null;
+  return`<div class="stack"><div class="row between"><span class="eyebrow">${esc(f.name)}${f.kind==="debrief"?" · check-in":""}</span><button class="link small" data-act="flow-quit">Exit</button></div>
+  <div class="msgs">${FL.log.map(m=>`<div class="msg ${m.r==="u"?"me":"ai"}">${esc(m.t)}</div>`).join("")}${q?`<div class="msg ai"><b>${esc(q)}</b></div>`:""}</div>${flowInput()}</div>`}
+ const recent=S.journal.filter(j=>FLOWS[j.t]).slice(-5).reverse();
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Mindset coach</div><h1>How did it go?</h1><p class="muted small">Check in after practice or a match. Takes about three minutes and saves to your journal.</p></div>
+ <div class="grid2">${[["badpractice","Bad practice","Get what's useful, leave the rest"],["goodpractice","Good practice","Bank the evidence"],["badmatch","Bad match","Reset and find the fix"],["goodmatch","Good match","Lock in what worked"]].map(([k,t,s])=>`<button class="tile" data-act="flow-start" data-f="${k}" style="${k.startsWith("bad")?"":"border-color:color-mix(in srgb,var(--red) 55%,var(--line))"}"><span class="k">${t}</span><span class="small muted">${s}</span></button>`).join("")}</div>
+ <div class="stack"><h3>Work on something</h3>${Object.entries(FLOWS).filter(([,f])=>f.kind==="topic").map(([k,f])=>`<button class="tile" data-act="flow-start" data-f="${k}" style="flex-direction:row;align-items:center;justify-content:space-between"><span class="k" style="font-size:1.05rem">${esc(f.name)}</span>${S.flowPlans[k]?'<span class="pill">Check in</span>':'<span class="muted">→</span>'}</button>`).join("")}</div>
+ ${recent.length?`<div class="stack"><h3>Recent check-ins</h3>${recent.map(j=>`<button class="tile" data-go="journal" style="flex-direction:row;justify-content:space-between;align-items:center"><span>${esc(entryName(j.t))}</span><span class="mono small muted">${fmtDate(j.date)}</span></button>`).join("")}</div>`:""}</div>`};
+
+/* ----- Quotes ----- */
+let qOffset=0,qDel=null,qEdit=null;
+function dayNum(){const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*6e4)/864e5)}
+function dailyQuote(){return QUOTE_LIB[(dayNum()*7+qOffset)%QUOTE_LIB.length]}
+function coreQuotes(){return S.quotes.filter(q=>q.core)}
+function quoteFor(tag){const core=coreQuotes();if(core.length){const q=core[Math.floor(Math.random()*core.length)];return[q.t,q.a]}const pool=QUOTE_LIB.filter(q=>q[2]===tag);return pool[Math.floor(Math.random()*pool.length)]||QUOTE_LIB[0]}
+function quoteCard(q,label,extra=""){return`<figure class="card stack" style="margin:0;gap:10px;background:#140e10;border-color:color-mix(in srgb,var(--red) 45%,var(--line))"><span class="eyebrow">${esc(label)}</span><blockquote style="margin:0;font-family:var(--f-display);font-weight:800;font-size:clamp(1.45rem,6vw,2rem);line-height:1.12;text-transform:none;text-wrap:balance">“${esc(q[0])}”</blockquote>${q[1]?`<figcaption class="small muted">— ${esc(q[1])}</figcaption>`:""}${extra}</figure>`}
+function quoteAdd(){const t=$("#q-t").value.trim(),a=$("#q-a").value.trim();if(!t){toast("Type the quote first");return}S.quotes.push({id:"q"+Date.now(),t,a,core:$("#q-core").checked,date:Date.now()});save();toast("Quote added");route()}
+function quoteRow(q){if(qEdit===q.id)return`<div class="card stack"><textarea id="qe-t">${esc(q.t)}</textarea><input type="text" id="qe-a" value="${esc(q.a)}" placeholder="Who said it (optional)"><div class="row"><button class="btn sm red" data-act="q-edit-save" data-id="${q.id}">Save</button><button class="btn sm" data-act="q-edit" data-id="">Cancel</button></div></div>`;
+ return`<div class="card stack" style="gap:8px"><p style="font-size:1.05rem">“${esc(q.t)}”</p>${q.a?`<p class="small muted">— ${esc(q.a)}</p>`:""}<div class="row" style="gap:6px"><button class="chip" data-act="q-core" data-id="${q.id}" aria-pressed="${q.core}">${q.core?"★ I live by this":"☆ Live by this"}</button><button class="chip" data-act="q-edit" data-id="${q.id}">Edit</button>${qDel===q.id?`<button class="chip" data-act="q-del-yes" data-id="${q.id}" style="border-color:var(--red-hi);color:var(--red-hi)">Delete for good</button><button class="chip" data-act="q-del-no">Keep</button>`:`<button class="chip" data-act="q-del" data-id="${q.id}">Delete</button>`}</div></div>`}
+RENDER.quotes=()=>{const dq=dailyQuote();const saved=S.quotes.some(x=>x.t===dq[0]);const core=coreQuotes(),rest=S.quotes.filter(q=>!q.core);
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Quotes</div><h1>Words to live by</h1></div>
+ ${quoteCard(dq,qOffset?"Another one":"Today's quote",`<div class="row"><button class="btn sm" data-act="q-save-daily" ${saved?"disabled":""}>${saved?"Saved":"Save to my quotes"}</button><button class="btn sm ghost" data-act="q-next">Show another</button></div>`)}
+ <div class="stack"><h3>Quotes I live by</h3>${core.length?core.map(quoteRow).join(""):`<p class="small muted">Star a quote below to make it one you live by. These show on your home screen, on Match Day and at the end of every check-in.</p>`}</div>
+ <div class="card stack"><h3>Add a quote</h3><textarea id="q-t" placeholder="Type a quote you live by"></textarea><input type="text" id="q-a" placeholder="Who said it (optional)"><label class="row small" style="gap:10px"><input type="checkbox" id="q-core" style="width:20px;height:20px;accent-color:var(--red-hi)"> I live by this one</label><button class="btn red" data-act="q-add">Add quote</button></div>
+ ${rest.length?`<div class="stack"><h3>My quotes</h3>${rest.slice().reverse().map(quoteRow).join("")}</div>`:""}</div>`};
+
+/* ----- My Wrestling Code ----- */
+RENDER.code=()=>{const c=S.code;
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Build your own mindset</div><h1>My Wrestling Code</h1><p class="muted small">Answer in your own words. Then turn it into your code: one document to read before every competition.</p></div>
+ ${c.doc?`<div class="stack"><div class="row between"><h3>Your code</h3><span class="small muted">Updated ${fmtDate(c.updated)}</span></div><textarea class="codeview" id="code-doc" data-bind="code.doc" style="min-height:320px">${esc(c.doc)}</textarea>
+ <div class="row"><button class="btn" data-act="code-copy">Copy</button>${downloadsNs?`<button class="btn" data-act="code-export">Export .txt</button>`:""}<button class="btn ghost" data-act="code-gen">Regenerate</button></div></div><div class="divider"></div>`:""}
+ ${CODE_SECTIONS.map(([k,n,h])=>`<label class="f">${n}<span class="small muted" style="font-weight:400">${h}</span><textarea id="cs-${k}" data-bind="code.sections.${k}">${esc(c.sections[k]||"")}</textarea></label>`).join("")}
+ <button class="btn red block" data-act="code-gen">${c.doc?"Regenerate my code":"Create my code"}</button><p class="small muted">Your answers become one document you can edit.</p></div>`};
+function localCode(){const s=S.code.sections,n=S.profile.name;let out=`MY WRESTLING CODE${n?"\n"+n.toUpperCase():""}\n\n`;CODE_SECTIONS.forEach(([k,t])=>{if((s[k]||"").trim())out+=t.replace("My ","").toUpperCase()+"\n"+s[k].trim()+"\n\n"});return out.trim()}
+function genCode(){const filled=CODE_SECTIONS.filter(([k])=>(S.code.sections[k]||"").trim());if(filled.length<3){toast("Fill in at least three sections first");return}S.code.doc=localCode();S.code.updated=Date.now();save();route();toast("Your code is ready. Edit it however you like.")}
+
+/* ----- Journal ----- */
+let jt="daily";
+RENDER.journal=()=>{const T=JOURNAL_TEMPLATES[jt];
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Mental performance journal</div><h1>Journal</h1></div>
+ <div class="row">${Object.entries(JOURNAL_TEMPLATES).map(([k,t])=>`<button class="chip" data-act="j-tpl" data-k="${k}" aria-pressed="${jt===k}">${t.name}</button>`).join("")}</div>
+ <form class="card stack" id="jform"><h3>${T.name}</h3><div class="stack" style="gap:8px"><b class="small">Mental readiness today (1–10)</b><div class="scale" id="j-rate">${Array.from({length:10},(_,i)=>`<button type="button" data-act="j-rate" data-v="${i+1}" aria-pressed="false">${i+1}</button>`).join("")}</div></div>
+ ${T.qs.map((q,i)=>`<label class="f">${esc(q)}<textarea id="jq-${jt}-${i}" data-q="${esc(q)}"></textarea></label>`).join("")}<button class="btn red" type="submit">Save entry</button></form>
+ <div class="stack"><h3>Past entries</h3>${S.journal.length?S.journal.slice().reverse().slice(0,30).map((j,ix)=>`<details class="card"><summary style="cursor:pointer"><span class="mono small muted">${fmtDate(j.date)}</span> · <b>${esc(entryName(j.t))}</b>${j.rate?` · <span class="mono">${j.rate}/10</span>`:""}</summary><div class="stack" style="margin-top:10px">${Object.entries(j.a).filter(([,v])=>v).map(([q,v])=>`<div><p class="small muted">${esc(q)}</p><p>${esc(v)}</p></div>`).join("")}</div></details>`).join(""):`<p class="muted small">No entries yet. Your first one takes two minutes.</p>`}</div></div>`};
+
+/* ----- Progress ----- */
+function lineChart(){const A=S.assessments;if(!A.length)return`<p class="muted small">Complete an assessment to see this chart.</p>`;
+ const W=320,H=170,pl=26,pr=8,pt=10,pb=22;const n=A.length;const X=i=>n===1?pl+(W-pl-pr)/2:pl+i*(W-pl-pr)/(n-1);const Y=v=>pt+(10-v)*(H-pt-pb)/9;
+ const cols={confidence:"#e23441",discipline:"#f4f1ee",focus:"#d49b2b",emotion:"#46a86f",pressure:"#7aa7d9",resilience:"#b48ad6"};
+ let g="";for(const v of[1,4,7,10])g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(v)+4}" fill="var(--dim)" font-size="10" text-anchor="end" font-family="IBM Plex Mono,monospace">${v}</text>`;
+ A.forEach((a,i)=>{if(n<=6||i%Math.ceil(n/6)===0)g+=`<text x="${X(i)}" y="${H-6}" fill="var(--dim)" font-size="10" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtDate(a.date)}</text>`});
+ for(const k in DIMS){const pts=A.map((a,i)=>`${X(i)},${Y(a.scores[k])}`).join(" ");g+=`<polyline points="${pts}" fill="none" stroke="${cols[k]}" stroke-width="2"/>`;const l=A[n-1];g+=`<circle cx="${X(n-1)}" cy="${Y(l.scores[k])}" r="3.5" fill="${cols[k]}"/>`}
+ return`<div style="overflow-x:auto"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Self-ratings over time">${g}</svg></div><div class="row small" style="gap:12px">${Object.entries(DIMS).map(([k,n])=>`<span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:50%;background:${cols[k]};display:inline-block"></i>${n}</span>`).join("")}</div>`}
+function activityBars(days){const W=320,H=110,pb=18,bw=(W)/days;const counts=[];for(let i=days-1;i>=0;i--){const s=new Date();s.setHours(0,0,0,0);const start=s.getTime()-i*864e5,end=start+864e5;const c=[...S.vizLog,...S.breathLog,...S.journal].filter(x=>x.date>=start&&x.date<end).length+Object.values(S.challenges).filter(x=>x.done&&x.date>=start&&x.date<end).length+Object.values(S.modules).filter(m=>m.doneAt>=start&&m.doneAt<end).length;counts.push({c,d:new Date(start)})}
+ const max=Math.max(3,...counts.map(x=>x.c));let g="";counts.forEach((x,i)=>{const h=(H-pb-6)*x.c/max;g+=`<rect x="${i*bw+bw*.18}" y="${H-pb-h}" width="${bw*.64}" height="${Math.max(h,1.5)}" rx="2" fill="${x.c?"var(--red-hi)":"var(--line)"}"/>`;if(days<=7||i%5===0)g+=`<text x="${i*bw+bw/2}" y="${H-4}" fill="var(--dim)" font-size="9" text-anchor="middle" font-family="IBM Plex Mono,monospace">${days<=7?x.d.toLocaleDateString(undefined,{weekday:"short"}):x.d.getDate()}</text>`});
+ return`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily activity">${g}</svg>`}
+let progRange=7;
+RENDER.progress=()=>{const since=daysAgo(progRange);const r=x=>x.date>since;const vz=S.vizLog.filter(r),bz=S.breathLog.filter(r),jz=S.journal.filter(r),cz=Object.values(S.challenges).filter(c=>c.done&&c.date>since),mz=Object.values(S.modules).filter(m=>m.doneAt>since);
+ const jdays=new Set(jz.map(j=>new Date(j.date).toDateString())).size;const recs=recModules();
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Progress</div><h1>Your report</h1></div>
+ <div class="row"><button class="chip" data-act="prog-range" data-v="7" aria-pressed="${progRange===7}">This week</button><button class="chip" data-act="prog-range" data-v="30" aria-pressed="${progRange===30}">This month</button></div>
+ <div class="grid3">${[[vz.length,"Visualizations",Math.round(vz.reduce((a,x)=>a+x.secs,0)/60)+" min"],[bz.length,"Breathing",Math.round(bz.reduce((a,x)=>a+x.secs,0)/60)+" min"],[mz.length,"Modules done",""],[jz.length,"Journal entries",jdays+" of "+progRange+" days"],[cz.length,"Challenges",""],[S.assessments.length,"Assessments",""]].map(([v,l,s])=>`<div class="tile"><span class="stat">${v}</span><span class="small">${l}</span>${s?`<span class="small muted mono">${s}</span>`:""}</div>`).join("")}</div>
+ <div class="card stack"><h3>Daily activity</h3>${activityBars(progRange)}</div>
+ <div class="card stack"><div class="row between"><h3>Self-ratings over time</h3><button class="link small" data-act="retake">Re-rate</button></div>${lineChart()}<p class="small muted">Self-ratings show how you see yourself. They're useful for spotting trends, not a scientific measurement.</p></div>
+ <div class="stack"><h3>Recommended next</h3>${recs.map(m=>`<button class="tile" data-go="module-${m.id}"><span class="pill">${DIMS[m.skill]}</span><span class="k">${m.id}. ${esc(m.title)}</span></button>`).join("")||`<p class="muted small">You've completed every module. Keep using the rooms and your journal.</p>`}</div></div>`};
+
+/* ----- Match day ----- */
+RENDER.match=()=>{const c=S.comp;const cues=(S.code.sections.inmatch||"").trim();
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Competition mode</div><h1>Match day</h1></div>
+ <div class="grid2"><button class="tile" data-act="breath-quick" data-p="pre" data-m="2"><span class="mono small muted">2 min</span><span class="k">Pre-match breathing</span></button><button class="tile" data-act="viz-open" data-id="opponent"><span class="mono small muted">~${Math.round(estDur(VIZ[2])/60)} min</span><span class="k">Visualize: across from opponent</span></button></div>
+ ${coreQuotes().length?coreQuotes().slice(0,3).map(q=>quoteCard([q.t,q.a],"I live by this")).join(""):""}
+ ${S.bank.length?`<div class="card stack"><h3>Proof I'm prepared</h3><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">${S.bank.slice(-6).reverse().map(b=>`<li>${esc(b.t)}</li>`).join("")}</ul><p class="small muted">From your good-practice and good-match check-ins.</p></div>`:""}
+ <div class="card"><div class="row between"><h3>Checklist</h3><button class="link small" data-act="comp-reset">Reset</button></div>${c.items.map((it,i)=>`<label class="check"><input type="checkbox" id="ci-${i}" data-act="comp-check" data-i="${i}" ${it.d?"checked":""}><span>${esc(it.t)}</span></label>`).join("")}</div>
+ <div class="stack"><h3>Match intentions</h3>${[0,1,2].map(i=>`<input type="text" id="int-${i}" data-bind="comp.intent.${i}" value="${esc(c.intent[i])}" placeholder="${["Neutral: win the first hand fight","Top: hips heavy, break him down","Bottom: base, hands, up"][i]}">`).join("")}</div>
+ <div class="card stack"><h3>Reset reminders</h3>${cues?`<p style="white-space:pre-wrap">${esc(cues)}</p>`:`<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px"><li>One breath, one cue, every stoppage</li><li>That happened. What's next?</li><li>Hands, feet, breathe</li><li>One position at a time</li></ul>`}</div>
+ <details class="card"><summary style="cursor:pointer;font-weight:700">My Wrestling Code</summary><div style="margin-top:12px">${S.code.doc?`<div class="codeview">${esc(S.code.doc)}</div>`:`<p class="small muted">Not written yet. <button class="link" data-go="code">Build it</button></p>`}</div></details>
+ <div class="stack"><h3>After the match</h3><div class="grid2"><button class="btn" data-act="post" data-k="goodmatch">Good match · check in</button><button class="btn" data-act="post" data-k="badmatch">Bad match · check in</button></div></div></div>`};
+
+/* ----- 30-day ----- */
+function nextChallenge(){for(let i=1;i<=30;i++)if(!S.challenges[i]?.done)return i;return 31}
+let chSel=null;
+RENDER.challenge=()=>{const n=chSel||Math.min(30,nextChallenge());const c=CHALLENGES[n-1];const st=S.challenges[n]||{};const total=Object.values(S.challenges).filter(x=>x.done).length;
+ const ms=[7,14,21,30];
+ return`<div class="stack-lg"><div class="stack"><div class="eyebrow">Daily mindset challenge</div><h1>30 days</h1><p class="small muted">Miss a day? Pick up where you left off. Progress counts days completed, not streaks.</p></div>
+ <div class="row">${ms.map(m=>`<span class="pill ${total>=m?"done":""}">${total>=m?"✓ ":""}${m} days</span>`).join("")}</div>
+ <div class="days">${Array.from({length:30},(_,i)=>`<button class="day ${S.challenges[i+1]?.done?"done":""} ${i+1===n?"today":""}" data-act="ch-sel" data-n="${i+1}" aria-label="Day ${i+1}">${i+1}</button>`).join("")}</div>
+ <div class="card stack"><span class="eyebrow">Day ${n}</span><div><p class="small muted">Lesson</p><h3>${esc(c[0])}</h3></div><div><p class="small muted">Exercise</p><p>${esc(c[1])}</p></div><label class="f">${esc(c[2])}<textarea id="ch-ans-${n}" data-bind="challenges.${n}.answer">${esc(st.answer||"")}</textarea></label>
+ ${st.done?`<div class="row between"><span class="pill done">Completed ${fmtDate(st.date)}</span><button class="link small" data-act="ch-undo" data-n="${n}">Mark not done</button></div>`:`<button class="btn red" data-act="ch-done" data-n="${n}">Mark day ${n} complete</button>`}</div></div>`};
+
+/* ----- More & settings ----- */
+RENDER.more=()=>`<div class="stack-lg"><div class="stack"><div class="eyebrow">More</div><h1>My mindset</h1></div><div class="stack">${[["quotes","Quotes","Today's quote and the quotes you live by"],["code","My Wrestling Code","Your personal code, built from your answers"],["match","Match day","Checklist, intentions, quick breathing and visualization"],["journal","Journal","Before and after practice and competition"],["progress","Progress","Weekly and monthly reports"],["challenge","30-day challenge","One lesson, one exercise, one question a day"],["profile","Assessment & profile","Re-rate yourself and see recommendations"],["settings","Settings","Data, reset"]].map(([v,t,s])=>`<button class="tile" data-go="${v}"><span class="k">${t}</span><span class="small muted">${s}</span></button>`).join("")}</div></div>`;
+let confirmReset=false;
+RENDER.settings=()=>`<div class="stack-lg"><div class="stack"><div class="eyebrow">Settings</div><h1>Settings</h1></div>
+ <div class="card stack"><h3>Your data</h3><p class="small">${cloud.status==="account"?"Saved privately to your claude.ai account. Only you can see it, on any device where you open this page signed in.":"Saved in this browser only. Open this page on claude.ai signed in to save it to your account."}</p></div>
+ <div class="card stack"><h3>Reset everything</h3><p class="small muted">Deletes your profile, assessments, progress, journal, code and coach history.</p>${confirmReset?`<div class="row"><button class="btn red" data-act="reset-yes">Yes, delete everything</button><button class="btn" data-act="reset-no">Cancel</button></div>`:`<button class="btn" data-act="reset-ask">Reset all data</button>`}</div></div>`;
+
+/* ================= events ================= */
+function setPath(path,val){const ks=path.split(".");let o=S;for(let i=0;i<ks.length-1;i++){const k=ks[i];if(ks[0]==="modules"&&i===1)o=modState(k);else if(ks[0]==="challenges"&&i===1)o=S.challenges[k]||(S.challenges[k]={});else o=o[k]}o[ks[ks.length-1]]=val}
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.bind){setPath(t.dataset.bind,t.value);if(t.dataset.mod)checkModDone(+t.dataset.mod);save()}
+ if(t.dataset.act==="mx"){const k=t.dataset.k,v=+t.value;if(k==="master"){S.viz.master=v;Arena.setMaster(v)}else if(k==="narr")S.viz.narr=v;else{S.viz.mix=S.viz.mix||{...ENVS[S.viz.env].mix};S.viz.mix[k]=v;if(Arena.running)Arena.level(k,v)}save()}});
+document.addEventListener("change",e=>{const t=e.target,a=t.dataset.act;
+ if(a==="mod-ex"){modState(t.dataset.id).ex=t.checked;save()}
+ if(a==="viz-autodim"){S.viz.autoDim=t.checked;save()}
+ if(a==="br-toggle"){S.breath[t.dataset.k]=t.checked;save();if(!BR.running)route()}
+ if(a==="comp-check"){S.comp.items[+t.dataset.i].d=t.checked;save()}});
+document.addEventListener("submit",e=>{if(e.target.id!=="jform")return;e.preventDefault();const a={};let any=false;e.target.querySelectorAll("textarea").forEach(t=>{a[t.dataset.q]=t.value.trim();if(t.value.trim())any=true});const rb=e.target.querySelector('#j-rate [aria-pressed="true"]');if(!any&&!rb){toast("Write at least one answer");return}S.journal.push({t:jt,date:Date.now(),a,rate:rb?+rb.dataset.v:null});save();toast("Entry saved");route()});
+document.addEventListener("keydown",e=>{if(e.target.id==="flow-in"&&e.key==="Enter"&&!e.shiftKey){e.preventDefault();flowAnswer(e.target.value)}});
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){go(g.dataset.go);return}
+ const el=e.target.closest("[data-act]");if(!el)return;const a=el.dataset.act,d=el.dataset;
+ switch(a){
+ case"ob-next":ob.step++;route();break;
+ case"ob-back":if(ob.step<=1&&ob.active){ob.active=false;ob.step=0;route()}else{ob.step--;route()}break;
+ case"ob-score":ob.scores[d.k]=+d.v;route();document.querySelector(`[data-k="${d.k}"][data-v="${d.v}"]`)?.focus({preventScroll:false});break;
+ case"ob-finish":S.assessments.push({date:Date.now(),scores:{...ob.scores}});S.onboarded=true;ob.active=false;save();ob.step=0;go("profile");break;
+ case"retake":ob.step=2;ob.scores={...(latestScores()||{})};ob.active=true;route();break;
+ case"edit-profile":ob.step=1;ob.scores={...(latestScores()||{})};ob.active=true;route();break;
+ case"mod-read":modState(d.id).read=true;checkModDone(+d.id);save();route();break;
+ case"quiz":{const m=modState(d.id);m.quiz[d.q]=+d.o;checkModDone(+d.id);save();const y=window.scrollY;route();window.scrollTo(0,y);break}
+ case"quiz-reset":{modState(d.id).quiz={};save();const y=window.scrollY;route();window.scrollTo(0,y);break}
+ case"viz-env":S.viz.env=d.k;S.viz.mix=null;save();if(Arena.running)Arena.start(d.k);route();break;
+ case"viz-set":S.viz[d.k]=d.k==="ambientMin"?+d.v:d.v;save();{const y=window.scrollY;route();window.scrollTo(0,y);document.querySelectorAll("details")[0].open=true}break;
+ case"viz-open":if(Arena.running)Arena.stop(true);PL.open(d.id);break;
+ case"mx-preview":if(Arena.running){Arena.stop()}else{Arena.start(S.viz.env,S.viz.mix||ENVS[S.viz.env].mix);Arena.setMaster(S.viz.master)}el.textContent=Arena.running?"Stop preview":"Preview arena";break;
+ case"mx-reset":S.viz.mix=null;save();if(Arena.running)Arena.applyMix(ENVS[S.viz.env].mix);{const y=window.scrollY;route();window.scrollTo(0,y);document.querySelectorAll("details")[1].open=true}break;
+ case"viz-gen":genViz();break;
+ case"pl-pp":PL.toggle();break;
+ case"pl-restart":PL.restart();break;
+ case"pl-exit":PL.exit();break;
+ case"pl-dim":e.stopPropagation();$("#player").classList.add("dim");break;
+ case"br-start":BR.start();break;case"br-pause":BR.pause();break;case"br-resume":BR.resume();break;case"br-restart":BR.restart();break;case"br-end":BR.stop();break;
+ case"br-pat":{if(BR.running)BR.stop(true);S.breath.pattern=d.p;const p=BREATH_PATTERNS.find(x=>x.id===d.p);if(p)S.breath.d=[...p.d];save();route();break}
+ case"br-min":if(BR.running)BR.stop(true);S.breath.minutes=+d.v;save();route();break;
+ case"br-step":{if(BR.running)BR.stop(true);const i=+d.i,min=i%2?0:2;S.breath.d[i]=Math.max(min,Math.min(10,S.breath.d[i]+ +d.dv));S.breath.pattern="custom";save();const y=window.scrollY;route();window.scrollTo(0,y);break}
+ case"breath-quick":{if(S.breath.voice||S.breath.ambience){try{Arena.unlock()}catch(e){}}const p=BREATH_PATTERNS.find(x=>x.id===d.p)||BREATH_PATTERNS[0];S.breath.pattern=p.id;S.breath.d=[...p.d];S.breath.minutes=d.m?+d.m:2;save();go("breathe");setTimeout(()=>BR.start(),0);break}
+ case"flow-start":flowStart(d.f);break;
+ case"flow-choice":flowAnswer(d.v);break;
+ case"flow-next":flowAnswer($("#flow-in")?$("#flow-in").value:"");break;
+ case"flow-act":flowAct(d.v);break;
+ case"flow-quit":FL.id=null;route();break;
+ case"q-add":quoteAdd();break;
+ case"q-core":{const q=S.quotes.find(x=>x.id===d.id);q.core=!q.core;save();route();break}
+ case"q-del":qDel=d.id;route();break;case"q-del-no":qDel=null;route();break;
+ case"q-del-yes":S.quotes=S.quotes.filter(x=>x.id!==d.id);qDel=null;save();route();break;
+ case"q-save-daily":{const dq=dailyQuote();if(!S.quotes.some(x=>x.t===dq[0])){S.quotes.push({id:"q"+Date.now(),t:dq[0],a:dq[1],core:false,date:Date.now()});save();toast("Saved to My Quotes")}route();break}
+ case"q-next":qOffset++;route();break;
+ case"q-edit":qEdit=d.id;route();break;
+ case"q-edit-save":{const q=S.quotes.find(x=>x.id===d.id);q.t=$("#qe-t").value.trim()||q.t;q.a=$("#qe-a").value.trim();qEdit=null;save();route();break}
+ case"code-gen":genCode();break;
+ case"code-copy":{const txt=S.code.doc;navigator.clipboard?.writeText(txt).then(()=>toast("Copied")).catch(()=>{const t=$("#code-doc");t.select();toast("Selected. Copy it from here.")});break}
+ case"code-export":downloadsNs.save({filename:"My Wrestling Code.txt",data:S.code.doc}).then(()=>{}).catch(()=>{});break;
+ case"j-tpl":jt=d.k;route();break;
+ case"j-rate":el.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b===el));break;
+ case"prog-range":progRange=+d.v;route();break;
+ case"comp-reset":S.comp.items.forEach(i=>i.d=false);S.comp.intent=["","",""];save();route();break;
+ case"post":flowStart(d.k);break;
+ case"ch-sel":chSel=+d.n;route();break;
+ case"ch-done":{const n=+d.n;S.challenges[n]=Object.assign(S.challenges[n]||{},{done:true,date:Date.now()});save();chSel=null;toast("Day "+n+" complete");route();break}
+ case"ch-undo":{S.challenges[+d.n].done=false;save();route();break}
+ case"reset-ask":confirmReset=true;route();break;case"reset-no":confirmReset=false;route();break;
+ case"reset-yes":confirmReset=false;S=DEFAULTS();S.updatedAt=Date.now();save();ob.step=0;ob.scores={};go("onboard");break;
+ }});
+
+function genViz(){const v=buildViz($("#cv-sit").value,$("#cv-skill").value,$("#cv-note").value);S.customViz.push(v);save();PL.open(v.id)}
+
+/* ================= boot ================= */
+document.getElementById("app").innerHTML=`<header class="topbar"><div class="in"><button class="brand" data-go="home"><i></i>Mat Mind</button><span class="sync" id="sync">Saved on device</span></div></header>
+<main class="wrap" id="main"></main>
+<nav class="tabs" aria-label="Main"><div class="in">${[["home","Home"],["academy","Academy"],["viz","Visualize"],["breathe","Breathe"],["coach","Coach"],["more","More"]].map(([k,n])=>`<button class="tab" data-go="${k}" aria-label="${n}">${svgI(k)}<span>${n}</span></button>`).join("")}</div></nav>`;
+route();initCloud();
+document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&PL.on&&PL.playing){try{if(navigator.wakeLock)PL.wake=await navigator.wakeLock.request("screen")}catch(e){}}});
+</script></body></html>
